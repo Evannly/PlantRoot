@@ -24,14 +24,14 @@ Discover biologically significant traits form CT scan of plant root.
 #### Install Dependencies ####
 1. Download Boost 1.68.0 [here](https://dl.bintray.com/boostorg/release/1.68.0/source/boost_1_68_0.zip) and extract the contents to a folder of your choice.
 2. In command line, cd to its directory and run 
-```
-.\bootstrap.bat
-```
+  ```
+  .\bootstrap.bat
+  ```
 You should see an executable file "b2" is generated.
 3. In command line, install libboost python library by running
-```
-.\b2 --address-mode=64 --with-python
-```
+  ```
+  .\b2 --address-mode=64 --with-python
+  ```
 After a successful installation, the .lib file should be in boost_1_68_0/stage/lib.
 4. Download glfw-3.3 64bit [here](https://github.com/glfw/glfw/releases/download/3.3/glfw-3.3.bin.WIN64.zip) and extract the contents to a folder of your choice.
 5. Generate glad [here](http://glad.dav1d.de/#profile=compatibility&specification=gl&api=gl%3D4.6&api=gles1%3D1.0&api=gles2%3D3.2&api=glsc2%3D2.0&language=c&loader=on). Language: C/C++, Specification: OpenGL, Profile: Compatibility, API: Select all latest versions (gl: 4.6, gles1: 1.0, gles2: 3.2, glsc2: 2.0), Extensions: Leave blank, Options: Generate a loader. Click generate and extract the contents to a folder of your choice.
@@ -57,17 +57,17 @@ Having the same version as listed above guarentees a working environment. Having
    - set(PYTHON_DIR ... <- This is the directory that has your python.exe (.../Python/Python37)
    - set_target_properties(RootsEXE PROPERTIES RUNTIME_OUTPUT_DIRECTORY ... <- This is the debug directory (.../PlantRoot/x64/Debug)
 3. Save the file and in command line, cd to your project directory and run
-```
-cmake -G "Visual Studio Win64"
-```
+  ```
+  cmake -G "Visual Studio Win64"
+  ```
 4. Now you should see "RootsToolC.sln" solution generated in your project directory.
 
 #### Compile #### 
 1. Open "RootsToolC.sln" in Visual Studio. If it is unable to open the solution and gives an error like "Could not open 'xxx.VC.VC.opendb': The process cannot access the file because it is being used by another process.", in Team Explorer, click Home|PlantRoot and go to "Settings -- Repository Settings". Under "Ignore & Attributes Files", generate a new .gitignore file if there isn't one and click edit. Add the following line to the list under "#Build Results".
-```
-db.lock
-```
-Save it and re-open Visual Studio.
+  ```
+  db.lock
+  ```
+  Save it and re-open Visual Studio.
 2. In Class View, Right click on "RootsTool" and select "Set as Startup Project"
 3. Select Build->Build Solution
    - If it reports error message like "LINK : fatal error LNK1104: cannot open file ...", check if your dependencies are correctly installed and CMakeLists.txt is correctly modified. If it still doesn't work, go to "Solution Explorer -- right click RootsTool -- Properities" and manually add these directories:
