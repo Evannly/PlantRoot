@@ -1,4 +1,4 @@
-# PlantRoot #
+# Introduction #
 
 ### Aim ###
 Discover biologically significant traits form CT scan of plant root.
