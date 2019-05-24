@@ -52,11 +52,11 @@ Note: Having the same version as listed above guarentees a working environment. 
 
 ## Known conflicts and bugs ##
 
-1. Boost 1.65.0 doesn't work with python 3.7.
+1. Boost 1.65.1 doesn't work with python 3.7.
 
 2. Boost 1.67.0 has a bug in python/details/config.hpp that makes the program unable to find libboost_python library file.
 
-3. Boost 1.70 doesn't respond when running bootstrap.
+3. Boost 1.70.0 doesn't respond when running bootstrap.
 
 4. Python 32bit version doesn't work with libboost_python 64bit version. Make sure you download both as 64bit when you have a 64bit windows.
 
