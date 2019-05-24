@@ -1,10 +1,13 @@
-# PlantRoot
+# PlantRoot #
+
 ### Aim ###
 Discover biologically significant traits form CT scan of plant root.
+
 ### How ###
 1. Using [persistent homology](https://www.cse.wustl.edu/~taoju/research/homology_CCCG.pdf) to deal with topological noise.
 2. Build graph structure for skeleton.
 3. Build root heirarchy to understand biologically meaningful traits.
+
 ### Skeleton Data Structure ###
 1. Lower level
    - node - defined by 3D location (x,y,z)
@@ -15,13 +18,15 @@ Discover biologically significant traits form CT scan of plant root.
    - metaFace
 
 
-## Installation Guide ##
-### Install Python and Visual Studio ###
+# Installation Guide #
+
+## Install Python and Visual Studio ##
  - Environment: Windows 10 64bit, Python 3.7.3 64bit, Visual Studio 2015 or 2017
  - Download python 3.7.3 64bit [here](https://www.python.org/ftp/python/3.7.3/python-3.7.3-amd64.exe)
  - After installation, if you cannot run python in command line, right click on "This PC", select "Properties -- Advanced System Settings -- Environment Variables.." and add your directory which contains python.exe, then you should be able to run python and pip3.
  - Note that Visual Studio 2015 does NOT install the languages by default. If you are using Visual Studio 2015, you need to manually choose to install the languages in the customized section during setup.
-### Install Dependencies ###
+
+## Install Dependencies ##
 
 1. Download Boost 1.68.0 [here](https://dl.bintray.com/boostorg/release/1.68.0/source/boost_1_68_0.zip) and extract the contents to a folder of your choice.
 
@@ -45,13 +50,17 @@ Discover biologically significant traits form CT scan of plant root.
 
 Note: Having the same version as listed above guarentees a working environment. Having other versions might work but is not tested.
 
-### Known conflicts and bugs ###
+## Known conflicts and bugs ##
+
 1. Boost 1.65.0 doesn't work with python 3.7.
+
 2. Boost 1.67.0 has a bug in python/details/config.hpp that makes the program unable to find libboost_python library file.
+
 3. Boost 1.70 doesn't respond when running bootstrap.
+
 4. Python 32bit version doesn't work with libboost_python 64bit version. Make sure you download both as 64bit when you have a 64bit windows.
 
-### Modify CMakeLists.txt ###
+## Modify CMakeLists.txt ##
 
 1. Navigate to your project directory and find CMakeLists.txt.
 
@@ -75,7 +84,7 @@ Note: Having the same version as listed above guarentees a working environment. 
 
 4. Now you should see "RootsToolC.sln" solution generated in your project directory.
 
-### Compile ###
+## Compile ##
 
 1. Open "RootsToolC.sln" in Visual Studio. If it is unable to open the solution and gives an error like "Could not open 'xxx.VC.VC.opendb': The process cannot access the file because it is being used by another process.", in Team Explorer, click Home|PlantRoot and go to "Settings -- Repository Settings". Under "Ignore & Attributes Files", generate a new .gitignore file if there isn't one and click edit. Add the following line to the list under "#Build Results".
   ```
@@ -96,5 +105,5 @@ Note: Having the same version as listed above guarentees a working environment. 
 
 4. A successful build should give only warnings and have "3 succeeded, 0 failed, 1 skipped". Check your output folder (parallel to your project folders and named "python"), there should be files that looks like "RootsEXE.xxx" and "RootsTool.xxx".
 
-### Finally ###
+## Finally ##
 Congrats! Now you are finished on the C++ part. Go to [PlantRootRelease](https://github.com/chunyuan1/PlantRootsRelease) for further instruction on the python part.
