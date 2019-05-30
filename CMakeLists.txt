@@ -31,7 +31,7 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc")
 
 find_package(Boost REQUIRED)
 
-include_directories(E:/will/boost_1_65_1)
+include_directories(C:/Users/zhengyishan/Documents/Dependencies/boost_1_68_0)
 if (NOT "$ENV{BOOST_INCLUDE_DIRS}" STREQUAL "")
     set(BOOST_INCLUDE_DIRS "$ENV{BOOST_INCLUDE_DIRS}" CACHE STRING "Boost include directory, eg. boost_v_xx_x/boost" FORCE)
 endif()
