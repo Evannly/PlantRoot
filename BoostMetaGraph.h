@@ -381,6 +381,7 @@ namespace Roots{
 			{0.0f, 0.0f, 0.502f, 1.0f},
 			{0.502f, 0.502f, 0.502f, 1.0f} };
 		
+		
 		bool PrimaryBranchSelectionValid;
 		MetaV PrimaryBranchSelection;
 		struct PrimaryBranchStruct
@@ -542,7 +543,7 @@ namespace Roots{
 
 		int getNumPrimaryNodes()
 		{
-			return (int)PrimaryNodes.size();
+			return PrimaryNodes.size();
 		}
 
 		bool isDisplaySelectedSegment();
@@ -746,6 +747,7 @@ namespace Roots{
 		Automatically find priamry nodes
 		*/
 		void FindPrimaryNodeOperation(float look_distance, float kernel_bandwidth);
+		bool branchLongerThanThreshold(MetaV prev, MetaV self, float threshold);
 		std::vector<float> neighbourhoodPoints(std::vector<float> positions, float x_centroid, float distance = 5);
 		float gaussian_kernal(float distance, int bandwidth);
 

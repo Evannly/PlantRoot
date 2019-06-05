@@ -354,32 +354,6 @@ namespace Roots
 		}
 	}
 
-	SkelEdge BSkeleton::addEdge(int v0, int v1)
-	{
-		SkelEdge e;
-		bool edgeAdded;
-		boost::tie(e, edgeAdded) = boost::add_edge(v0, v1, *this);
-		if (edgeAdded)
-		{
-			RootAttributes ra = RootAttributes();
-			ra.euclidLength = (operator[](v0) - operator[](v1)).mag();
-			ra.v0id = v0;
-			ra.v1id = v1;
-			operator[](e) = ra;
-			
-		}
-		return e;
-	}
-	SkelVert BSkeleton::addVertex(Point3d pointLocation)
-	{
-		SkelVert v;
-		v = boost::add_vertex(*this);
-		operator[](v) = pointLocation;
-		operator[](v).id = (int)v;
-		mBoundsFound = false;
-		return v;
-	}
-
 	void BSkeleton::updateGLVertices()
 	{
 		glVertices.resize(m_vertices.size() * 3);
@@ -401,7 +375,7 @@ namespace Roots
 		}
 		else
 		{
-			float big = (float)99999999999;
+			float big = 99999999999;
 			mMinX = big;
 			mMaxX = -big;
 			mMinY = big;
@@ -439,7 +413,7 @@ namespace Roots
 			sum = sum + operator[](*vIter.first);
 		}
 
-		sum = sum / (float)m_vertices.size();
+		sum = sum / m_vertices.size();
 		//Point3d sum = minPoint + maxPoint;
 		mCenter = sum;
 		originalCenter = mCenter;
@@ -508,7 +482,7 @@ namespace Roots
 		skelVertIter vi = boost::vertices(*this);
 		while (vi.first != vi.second)
 		{
-			int deg = (int)(boost::degree(*vi.first, *this));
+			int deg = boost::degree(*vi.first, *this);
 			if (deg != 2 && deg != 0)
 			{
 				result.push_back(*vi.first);
@@ -605,7 +579,8 @@ void PySkeleton::reload()
 
 	for (int i = 0; i < 11; ++i)
 	{
-		int idx = (int)(i / 10.0f * thicknessList.size());
+		float fi = i;
+		int idx = (fi / 10.0) * thicknessList.size();
 		idx -= 1;
 		idx = std::max(idx, 0);
 		thicknessPercentiles.append<float>(thicknessList[idx]);

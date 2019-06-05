@@ -84,7 +84,7 @@ namespace
 			mvec result = mvec();
 			for (int i = 0; i < 3; ++i)
 			{
-				result[i] = operator[](i) / (float)div;
+				result[i] = operator[](i) / div;
 			}
 			return result;
 		}
@@ -93,7 +93,7 @@ namespace
 			mvec result = mvec();
 			for (int i = 0; i < 3; ++i)
 			{
-				result[i] = operator[](i) * (float)mul;
+				result[i] = operator[](i) * mul;
 			}
 			return result;
 		}
@@ -112,7 +112,7 @@ namespace
 			double normal = norm();
 			for (int i = 0; i < 3; ++i)
 			{
-				data[i] /= (float)normal;
+				data[i] /= normal;
 			}
 		}
 
@@ -197,13 +197,13 @@ namespace
 
 		mvec dP = w + (u*sc) - (v*tc);
 		
-		rayToRayDist = (float)(dP.norm());
+		rayToRayDist = dP.norm();
 
 		mvec lineVec = p0 - p1;
 
-		float lineLength = (float)(lineVec.norm());
+		float lineLength = lineVec.norm();
 
-		if (lineLength > tc && tc > 0 && sc > 0)
+		if (lineLength > tc && tc > 0 & sc > 0)
 		{
 			hitDist = sc;
 		}
@@ -221,7 +221,7 @@ namespace
 		mvec closestApproach = rayOrigin + rayDir * hitDist;
 
 		mvec rayPointVec = (point - closestApproach);
-		float rayPointDist = (float)(rayPointVec.norm());
+		float rayPointDist = rayPointVec.norm();
 
 		if (rayPointDist < pointScale)
 		{
@@ -469,6 +469,7 @@ namespace Roots
 		if (breakEdgeValid)
 		{
 			MetaE e;
+			bool exists;
 			e = breakEdge;
 
 			std::cout << "...Edge parameters..." << std::endl;
@@ -564,6 +565,7 @@ namespace Roots
 		if (splitEdgeValid)
 		{
 			MetaE e;
+			bool exists;
 			e = splitEdge;
 			std::cout << "...Edge parameters..." << std::endl;
 			std::cout << "Component : " << operator[](e).connectedComponent << std::endl;
@@ -618,6 +620,7 @@ namespace Roots
 		if (removeComponentEdgeValid)
 		{
 			MetaE e;
+			bool exists;
 			e = removeComponentEdge;
 
 			std::cout << "...Edge parameters..." << std::endl;
@@ -1508,11 +1511,11 @@ namespace Roots
 			GLint window[4];
 			glGetIntegerv(GL_VIEWPORT, window);
 
-			std::vector<float> windowSpacePos = { 0.0f, 0.0f };
-			windowSpacePos[0] = ((pointPos3d[0] + 1.0f) / 2.0f) * window[2] + window[0];
-			windowSpacePos[1] = ((pointPos3d[1] + 1.0f) / 2.0f) * window[3] + window[1];
-			windowSpacePos[0] = (windowSpacePos[0] / window[2] - 0.5f) / -0.0658f;
-			windowSpacePos[1] = (windowSpacePos[1] / window[3] - 0.5f) / 0.0658f;
+			std::vector<float> windowSpacePos = { 0, 0 };
+			windowSpacePos[0] = ((pointPos3d[0] + 1.0) / 2.0) * window[2] + window[0];
+			windowSpacePos[1] = ((pointPos3d[1] + 1.0) / 2.0) * window[3] + window[1];
+			windowSpacePos[0] = (windowSpacePos[0] / window[2] - 0.5) / -0.0658;
+			windowSpacePos[1] = (windowSpacePos[1] / window[3] - 0.5) / 0.0658;
 			std::cout << "Window x : " << windowSpacePos[0] << " y : " << windowSpacePos[1] << std::endl;
 
 			mvec point = mvec(node->p);
@@ -1520,7 +1523,7 @@ namespace Roots
 			bool hits = false;
 			float hitDist = 10000000;
 			float scale = 0.0;
-			size_t degree = boost::degree(*mvi.first, *this);
+			int degree = boost::degree(*mvi.first, *this);
 			if (degree <= 1)
 			{
 				scale = nodeOptions.endpointScale;
@@ -2016,12 +2019,12 @@ namespace Roots
 		float currentRad = arcball_getRad();
 		if (increase)
 		{
-			currentRad /= 1.1f;
+			currentRad /= 1.1;
 			arcball_setSpeed(currentRad);
 		}
 		else
 		{
-			currentRad *= 1.1f;
+			currentRad *= 1.1;
 			arcball_setSpeed(currentRad);
 		}
 	}

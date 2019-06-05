@@ -15,7 +15,7 @@
 
 namespace
 {
-	typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, Point3d, Roots::RootAttributes, boost::no_property, boost::listS> BoostSkeleton;
+	typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, Point3d, Roots::RootAttributes, boost::no_property, boost::vecS> BoostSkeleton;
 	typedef boost::graph_traits<BoostSkeleton>::vertex_descriptor SkelVert;
 	typedef boost::graph_traits<BoostSkeleton>::edge_descriptor SkelEdge;
 }
@@ -167,13 +167,34 @@ namespace Roots
 		alias that both adds the connection between v0 and v1 in the boost graph,
 		and the decoration edge_descriptor for the root attributes
 		*/
-		SkelEdge addEdge(int v0, int v1);
+		inline SkelEdge addEdge(int v0, int v1) {
+			SkelEdge e;
+			bool edgeAdded;
+			boost::tie(e, edgeAdded) = boost::add_edge(v0, v1, *this);
+			if (edgeAdded)
+			{
+				RootAttributes ra = RootAttributes();
+				ra.euclidLength = (operator[](v0) - operator[](v1)).mag();
+				ra.v0id = v0;
+				ra.v1id = v1;
+				operator[](e) = ra;
+
+			}
+			return e;
+		};
 
 		/*
 		alias that both adds a new vertex to the boost graph, and adds the decoration
 		vertex_descriptor for the vertex 3d location
 		*/
-		SkelVert addVertex(Point3d pointLocation);
+		SkelVert addVertex(Point3d pointLocation) {
+			SkelVert v;
+			v = boost::add_vertex(*this);
+			operator[](v) = pointLocation;
+			operator[](v).id = v;
+			mBoundsFound = false;
+			return v;
+		};
 
 		void updateGLVertices();
 
