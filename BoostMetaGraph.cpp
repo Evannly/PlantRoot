@@ -2733,22 +2733,24 @@ namespace Roots
 	// input param val - look distance for each vertex
 	void BMetaGraph::FindPrimaryNodeOperation(float look_distance, float kernel_bandwidth)
 	{
-		std::cout << "enter FindPrimaryNodeOperation " << std::endl;
+		std::cout << "Find primary node" << std::endl;
 		if (auto_stem.empty() && StemPath.empty())
 		{
-			std::cout << "no stem available. return " << std::endl;
+			std::cout << "No stem available" << std::endl;
 			return;
 		}
-
 		auto_node.clear();
 
 		// find a list of meta vertices on the stem. Record their position
-		std::vector<float> positions;
-		std::vector<MetaV> current_stem_node;
-		if (!StemPath.empty())
+		std::vector<float> cluster_input_position;
+		std::vector<MetaV> cluster_input;
+
+		if (!StemPath.empty()) // User has selected a stem
 		{
-			std::cout << "Stem found " << std::endl;
-			float dist = 0; // store accumulative distance
+			std::cout << "User stem found" << std::endl;
+			float metaDist = 0; // store accumulative distance
+
+			// Exclude the short branches which are recognized as noises
 			for (size_t i = 0; i < StemPath_node.size(); ++i)
 			{
 				bool isValidPrimaryNode = false;
@@ -2758,195 +2760,170 @@ namespace Roots
 					MetaV prev = (i == 0) ? -1 : StemPath_node[i - 1];
 					MetaV next = (i == StemPath_node.size() - 1) ? -1 : StemPath_node[i + 1];
 					if (target != prev && target != next) {
-						std::cout << "There is a side edge from " << StemPath_node[i] << " to " << target;
+						std::cout << "Node " << StemPath_node[i] << " has a side branch to " << target;
 						std::pair<MetaE, bool> edge_pair = boost::edge(StemPath_node[i], target, *this);
 						float distance = operator[](edge_pair.first).mLength;
 						if (branchLongerThanThreshold(StemPath_node[i], target, 50 - distance)) {
-							std::cout << " and the max length is longer than 50" << std::endl;
+							std::cout << " with max length larger than 50";
 							isValidPrimaryNode = true;
 						}
-						else {
-							std::cout << std::endl;
-						}
+						std::cout << std::endl;
 					}
 				}
 				if (i == 0) {
 					if (isValidPrimaryNode) {
-						positions.push_back(0);
-						current_stem_node.push_back(StemPath_node[i]);
+						cluster_input_position.push_back(0);
+						cluster_input.push_back(StemPath_node[i]);
 					}
 				}
 				else {
-					dist += operator[](StemPath[i - 1]).mLength;
+					metaDist += operator[](StemPath[i - 1]).mLength;
 					if (isValidPrimaryNode) {
-						positions.push_back(dist);
-						current_stem_node.push_back(StemPath_node[i]);
+						cluster_input_position.push_back(metaDist);
+						cluster_input.push_back(StemPath_node[i]);
 					}
 				}
 			}
 		}
-		else // if (!auto_stem.empty())
+
+		else // User hasn't selected a stem
 		{
-			std::cout << "Suggested stem found " << std::endl;
-			std::cout << "auto_stem " << auto_stem.size() << std::endl;
+			std::cout << "Auto stem found " << std::endl;
 			std::vector<MetaV> auto_stem_metaNode;
 
-			for (SkelEdge se : auto_stem)
-			{
-				if (boost::degree(se.m_source, mSkeleton) > 2)
-				{
-					MetaV v = addNode(se.m_source, &mSkeleton);
-					std::cout << "v " << v << std::endl;
-					auto_stem_metaNode.push_back(v); // metaNode in random order here
+			// Topologically sort all the skeleton vertices in auto_stem 
+			std::map<SkelVert, std::vector<SkelVert>> m;
+			for (SkelEdge se : auto_stem) {
+				m[se.m_source].push_back(se.m_target);
+				m[se.m_target].push_back(se.m_source);
+			}
+
+			std::deque<SkelVert> sequence;
+			SkelVert nextSource = auto_stem[0].m_target;
+			SkelVert justVisited = auto_stem[0].m_source;
+			sequence.push_back(nextSource);
+			while (m[nextSource].size() != 1) {
+				SkelVert target = m[nextSource][0] != justVisited ? m[nextSource][0] : m[nextSource][1];
+				sequence.push_back(target);
+				justVisited = nextSource;
+				nextSource = target;
+			}
+			nextSource = auto_stem[0].m_source;
+			justVisited = auto_stem[0].m_target;
+			sequence.push_front(nextSource);
+			while (m[nextSource].size() != 1) {
+				SkelVert target = m[nextSource][0] != justVisited ? m[nextSource][0] : m[nextSource][1];
+				sequence.push_front(target);
+				justVisited = nextSource;
+				nextSource = target;
+			}
+
+			// Find metaNodes in the sorted vertices
+			for (SkelVert sv : sequence) {
+				if (boost::degree(sv, mSkeleton) > 2) {
+					MetaV v = addNode(sv, &mSkeleton);
+					auto_stem_metaNode.push_back(v);
 				}
 			}
-			std::cout << "auto_stem_metaNode " << auto_stem_metaNode.size() << std::endl;
-
-			std::vector<MetaV> stem_end_vertices;
-			// find start and end meta vertex of the suggested stem
-			for (int i = 0; i < auto_stem_metaNode.size(); ++i)
-			{
-				std::cout << i << " auto_stem_metaNode " << auto_stem_metaNode[i] << std::endl;
-				BMetaGraph::adjacency_iterator adjIt, adjEnd;
-				boost::tie(adjIt, adjEnd) = boost::adjacent_vertices(auto_stem_metaNode[i], *this);
-				int flag = 0;
-				for (; adjIt != adjEnd; ++adjIt)
-				{
-					if (std::find(auto_stem_metaNode.begin(), auto_stem_metaNode.end(), *adjIt) != auto_stem_metaNode.end())
-					{
-						flag++;
-					}
-				}
-				if (flag == 1) // if only one adjacent meta node of current node locate on stem
-				{
-					stem_end_vertices.push_back(auto_stem_metaNode[i]);
-				}
+			
+			// Record the position of each metaNode
+			std::vector<float> auto_stem_metaDist;
+			float metaDist = 0.0f;
+			auto_stem_metaDist.push_back(metaDist);
+			for (size_t i = 1; i < auto_stem_metaNode.size(); ++i) {
+				metaDist += operator[](boost::edge(auto_stem_metaNode[i - 1], auto_stem_metaNode[i], *this).first).mLength;
+				auto_stem_metaDist.push_back(metaDist);
 			}
-			std::cout << "stem_end_vertices " << stem_end_vertices.size() << std::endl;
 
-			// find stem meta nodes (sorted along stem)
-			using weight_map_t = boost::property_map<BMetaGraph, float BMetaEdge::*>::type;
-			weight_map_t kWeightMap = boost::get(&BMetaEdge::mLength, *this);
-
-			std::vector<int> distances(boost::num_vertices(*this));
-			std::cout << "boost::num_vertices(*this) " << boost::num_vertices(*this) << std::endl;
-			std::vector<MetaV> predecessors(boost::num_vertices(*this));
-
-			boost::dijkstra_shortest_paths(*this, stem_end_vertices[1],
-				boost::predecessor_map(boost::make_iterator_property_map(predecessors.begin(), boost::get(boost::vertex_index, *this)))
-				.distance_map(boost::make_iterator_property_map(distances.begin(), boost::get(boost::vertex_index, *this)))
-				.weight_map(kWeightMap)
-			);
-
-			// Extract the shortest path from start to end. record corresponding position of each node
-			std::vector<float> positions_temp;
-			std::vector<MetaV> current_stem_node_temp;
-			float dist = 0;
-			positions_temp.push_back(dist);
-			MetaV v = stem_end_vertices[0];
-			current_stem_node_temp.push_back(v);
-			for (MetaV u = predecessors[v]; u != v; v = u, u = predecessors[v])
-			{
-				std::pair<MetaE, bool> edge_pair = boost::edge(u, v, *this);
-				//StemPath.push_back(edge_pair.first);
-				dist += operator[](edge_pair.first).mLength;
-				positions_temp.push_back(dist);
-				current_stem_node_temp.push_back(u);
-			}
-			for (size_t i = 0; i < current_stem_node_temp.size(); ++i)
+			// Exclude short branches which are recognized as noises
+			for (size_t i = 0; i < auto_stem_metaNode.size(); ++i)
 			{
 				bool isValidPrimaryNode = false;
 				typename graph_traits<BoostMetaGraph>::out_edge_iterator ei, ei_end;
-				for (boost::tie(ei, ei_end) = out_edges(current_stem_node_temp[i], *this); ei != ei_end; ++ei) {
+				for (boost::tie(ei, ei_end) = out_edges(auto_stem_metaNode[i], *this); ei != ei_end; ++ei) {
 					MetaV target = boost::target(*ei, *this);
-					MetaV prev = (i == 0) ? -1 : current_stem_node_temp[i - 1];
-					MetaV next = (i == current_stem_node_temp.size() - 1) ? -1 : current_stem_node_temp[i + 1];
+					MetaV prev = (i == 0) ? -1 : auto_stem_metaNode[i - 1];
+					MetaV next = (i == auto_stem_metaNode.size() - 1) ? -1 : auto_stem_metaNode[i + 1];
 					if (target != prev && target != next) {
-						std::cout << "There is a side edge from " << current_stem_node_temp[i] << " to " << target;
-						std::pair<MetaE, bool> edge_pair = boost::edge(current_stem_node_temp[i], target, *this);
+						std::cout << "Node " << auto_stem_metaNode[i] << " has a side branch to " << target;
+						std::pair<MetaE, bool> edge_pair = boost::edge(auto_stem_metaNode[i], target, *this);
 						float distance = operator[](edge_pair.first).mLength;
-						if (branchLongerThanThreshold(current_stem_node_temp[i], target, 50 - distance)) {
-							std::cout << " and the max length is longer than 50" << std::endl;
+						if (branchLongerThanThreshold(auto_stem_metaNode[i], target, 50 - distance)) {
+							std::cout << " with max length larger than 50";
 							isValidPrimaryNode = true;
 						}
-						else {
-							std::cout << std::endl;
-						}
+						std::cout << std::endl;
 					}
 				}
 				if (isValidPrimaryNode) {
-					positions.push_back(positions_temp[i]);
-					current_stem_node.push_back(current_stem_node_temp[i]);
+					cluster_input_position.push_back(auto_stem_metaDist[i]);
+					cluster_input.push_back(auto_stem_metaNode[i]);
 				}
 			}
 		}
 
-		std::cout << "positions " << positions.size() << std::endl;
-
 		// mean shift clustering
-		std::vector<float> X = positions;
+		std::vector<float> cluster = cluster_input_position;
 		std::cout << "initial position" << std::endl;
-		for (float x : X)
+		for (float position : cluster)
 		{
-			std::cout << " " << x;
+			std::cout << position << " ";
 		}
-		std::cout << std::endl;
-		std::cout << std::endl;
-		std::cout << std::endl;
+		std::cout << std::endl << std::endl << std::endl;
 		int num_iterations = 20;
 		for (int i = 0; i < num_iterations; ++i)
 		{
-			for (int j = 0; j < X.size(); ++j)
+			for (int j = 0; j < cluster.size(); ++j)
 			{
 				// for each vertex x, find the neighbouring points N(x)
-				std::vector<float> neighbours = neighbourhoodPoints(X, X[j], look_distance);
+				std::vector<float> neighbours = neighbourhoodPoints(cluster, cluster[j], look_distance);
 
 				// for each vertex x, calculate mean shift m(x)
 				float numerator = 0;
 				float denominator = 0;
 				for (float neighbour : neighbours)
 				{
-					float weight = gaussian_kernal(std::abs(neighbour - X[j]), kernel_bandwidth);
+					float weight = gaussian_kernal(std::abs(neighbour - cluster[j]), kernel_bandwidth);
 					numerator += (weight * neighbour);
 					denominator += weight;
 				}
-				float new_x = numerator / denominator;
-				X[j] = new_x;
+				float new_position = numerator / denominator;
+				cluster[j] = new_position;
 			}
 
-			for (float x : X)
+			for (float position : cluster)
 			{
-				std::cout << " " << x;
+				std::cout << " " << position;
 			}
-			std::cout << std::endl;
+			std::cout << std::endl << std::endl;
 		}
 
 		// find corresponding meta vertices of vector X
-		X.erase(std::unique(X.begin(), X.end()), X.end());
-		std::cout << "X size " << X.size() << std::endl;
-		std::cout << "positioins size " << positions.size() << std::endl;
-		for (int i = 0; i < X.size(); ++i)
+		cluster.erase(std::unique(cluster.begin(), cluster.end()), cluster.end());
+		std::cout << std::endl << "cluster size: " << cluster.size() << std::endl;
+		std::cout << "cluster input size: " << cluster_input_position.size() << std::endl;
+		for (int i = 0; i < cluster.size(); ++i)
 		{
 			std::cout << i << std::endl;
 			// find index accoring to distance
-			auto low = std::lower_bound(positions.begin(), positions.end(), X[i]);
+			auto low = std::lower_bound(cluster_input_position.begin(), cluster_input_position.end(), cluster[i]);
 			float val = *low;
-			std::cout << "X[" << i << "] " << X[i] << std::endl;
-			std::cout << "lower_bound " << val << std::endl;
+			std::cout << "cluster[" << i << "] = " << cluster[i] << std::endl;
+			std::cout << "lower_bound = " << val << std::endl;
 
-			int pos = low - positions.begin();
-			std::cout << "pos " << pos << std::endl;
-			std::cout << "positions[pos] " << positions[pos] << std::endl;
-			if (pos > 0 && std::abs(X[i] - positions[pos - 1]) < std::abs(X[i] - positions[pos]))
+			int node_index = low - cluster_input_position.begin();
+			std::cout << "node index: " << node_index << std::endl;
+			std::cout << "node position: " << cluster_input_position[node_index] << std::endl;
+			if (node_index > 0 && std::abs(cluster[i] - cluster_input_position[node_index - 1]) < std::abs(cluster[i] - cluster_input_position[node_index]))
 			{
-				pos = pos - 1;
-				std::cout << "pos " << pos << std::endl;
-				std::cout << "positions[pos] " << positions[pos] << std::endl;
+				node_index = node_index - 1;
+				std::cout << "node index: " << node_index << std::endl;
+				std::cout << "node position: " << cluster_input_position[node_index] << std::endl;
 			}
 
 			//find node according to index
 			BoundingBox b;
-			BMetaNode *node = &operator[](current_stem_node[pos]);
+			BMetaNode *node = &operator[](cluster_input[node_index]);
 
 			float temp[3];
 			float temp2[3];
@@ -2958,7 +2935,6 @@ namespace Roots
 			b.addPoint(temp);
 			b.addPoint(temp2);
 			auto_node.push_back(b);
-
 		}
 		std::cout << " auto_ndoe size " << auto_node.size() << std::endl;
 		return;
