@@ -6,12 +6,10 @@ namespace Roots
 	//////////////////////////////////////////////EDGES////////////////////////////////////////////
 	EdgeVisualizationOptions::EdgeVisualizationOptions()
 	{
-
 		show = true;
 		scale = 1.0;
 		magnifyNonBridges = false;
 		showOnlyNonBridges = false;
-
 		minColorCutoff = 0.0;
 		maxColorCutoff = 1.0;
 		colorization = ColorizationOptions::ByThickness;
@@ -55,6 +53,7 @@ namespace Roots
 	void BMetaGraph::assignEdgeHeatMap(boost::python::list heatmap)
 	{
 		edgeOptions.heatmap = {};
+		std::cout << "boost::python::len(heatmap) is " << boost::python::len(heatmap) << std::endl;
 		for (int i = 0; i < boost::python::len(heatmap); ++i)
 		{
 			std::vector<GLfloat> vectorColor = {};
@@ -66,8 +65,10 @@ namespace Roots
 			edgeOptions.heatmap.push_back(vectorColor);
 		}
 		metaEdgeIter mei = boost::edges(*this);
-		for (; mei.first != mei.second; ++mei)
+		std::cout << "!!!!!!!!!!!max Thickness before updateCorlor is " << MinMaxStruct::maxThickness << std::endl;
+		for (;mei.first != mei.second; ++mei)
 		{
+			//std::cout << "max thickness is " << MinMaxStruct::maxThickness << std::endl; 1000
 			operator[](*mei.first).updateColors(edgeOptions, vertexColors, &mSkeleton);
 		}
 
@@ -423,12 +424,6 @@ namespace Roots
 	void BMetaGraph::setSegmentHorizontalSliderRadius(float val)
 	{
 		SegmentHorizontalRadius = val;
-		/*
-		metaEdgeIter mei = boost::edges(*this);
-		for (; mei.first != mei.second; ++mei)
-		{
-			operator[](*mei.first).updateColors(edgeOptions, vertexColors, &mSkeleton);
-		}*/
 		SetSelectSegmentPointOperation();
 	}
 	
@@ -507,7 +502,6 @@ namespace Roots
 
 		if (showTraitsOnly)
 		{
-			//glLineWidth(edgeOptions.scale * nonBridgeScaling);
 			glDrawElements(GL_LINES, stemVBO.size(), GL_UNSIGNED_INT, &stemVBO[0]);
 		}
 
@@ -515,7 +509,6 @@ namespace Roots
 		if (PrimaryBranchesObj.size() > 0)
 		{
 			int colorTableSize = randomColorLoopUpTable.size();
-			//glLineWidth(edgeOptions.scale * nonBridgeScaling);
 			if (showTraitsOnly && primaryBranchesVBO.size() > 0)
 			{
 				glDrawElements(GL_LINES, primaryBranchesVBO.size(), GL_UNSIGNED_INT, &primaryBranchesVBO[0]);
@@ -525,8 +518,6 @@ namespace Roots
 			{
 				for (auto vectorit = PrimaryBranchesObj.begin(); vectorit != PrimaryBranchesObj.end(); ++vectorit)
 				{
-					//std::cout << vectorit->primaryNode << std::endl;
-					//glDrawElements(GL_LINES, vectorit->metaEdges.size(), GL_UNSIGNED_INT, &vectorit->metaEdges[0]);
 					for (MetaE edge : vectorit->metaEdges)
 					{
 						// set confirmed branches the same color as the connected node
@@ -539,9 +530,7 @@ namespace Roots
 							for (int i = 0; i < 4; ++i)
 							{
 								edgeColor[i] = randomColorLoopUpTable[index][i];
-								//edgeColor[i] = ColorTable::getComponentColor(index)[i];
 							}
-							//std::vector<GLfloat> edgeColor = ColorTable::getComponentColor(index);
 							colorEdge(edge, edgeColor);
 						}
 						else
@@ -556,14 +545,11 @@ namespace Roots
 				int index = 0;
 				for (auto vectorit = PrimaryBranchesObj.begin(); vectorit != PrimaryBranchesObj.end(); ++vectorit)
 				{
-					//glDrawElements(GL_LINES, vectorit->metaEdges.size(), GL_UNSIGNED_INT, &vectorit->metaEdges[0]);
-					//std::cout << vectorit->primaryNode << std::endl;
 					if (vectorit->primaryNodeIndex == CurrentPrimaryNode)
 					{
 						GLfloat edgeColor[4];
 						for (int i = 0; i < 4; ++i)
 						{
-							//edgeColor[i] = ColorTable::getComponentColor(index)[i];
 							edgeColor[i] = randomColorLoopUpTable[index][i];
 						}
 						for (MetaE edge : vectorit->metaEdges)
@@ -580,7 +566,6 @@ namespace Roots
 				int index = 0;
 				for (auto vectorit = PrimaryBranchesObj.begin(); vectorit != PrimaryBranchesObj.end(); ++vectorit)
 				{
-					//glDrawElements(GL_LINES, vectorit->metaEdges.size(), GL_UNSIGNED_INT, &vectorit->metaEdges[0]);
 					// show branches of current node using random color
 					if (vectorit->primaryNodeIndex == CurrentPrimaryNode)
 					{
@@ -588,7 +573,6 @@ namespace Roots
 						for (int i = 0; i < 4; ++i)
 						{
 							edgeColor[i] = randomColorLoopUpTable[index][i];
-							//edgeColor[i] = ColorTable::getComponentColor(index)[i];
 						}
 						for (MetaE edge : vectorit->metaEdges)
 						{
@@ -610,7 +594,6 @@ namespace Roots
 								for (int i = 0; i < 4; ++i)
 								{
 									edgeColor[i] = randomColorLoopUpTable[index2][i];
-									//edgeColor[i] = ColorTable::getComponentColor(index2)[i];
 								}
 								colorEdge(edge, edgeColor);
 							}
@@ -631,7 +614,6 @@ namespace Roots
 				MetaV u_tmp = boost::source(*riter, *this);
 				MetaV v_tmp = boost::target(*riter, *this);
 				MetaE e_tmp = boost::edge(u_tmp, v_tmp, *this).first;
-				//highLightEdge(e_tmp);
 				colorEdge(e_tmp, GREEN);
 			}
 		}
@@ -794,8 +776,7 @@ namespace Roots
 			{
 				nodeColor = node->currentColor;
 			}
-			
-			//if (!PrimaryBranchesNode.empty() && (std::find(PrimaryBranchesNode.begin(), PrimaryBranchesNode.end(), *mvi.first) != PrimaryBranchesNode.end()))
+
 			if (PrimaryBranchSelectionValid && (*mvi.first == PrimaryBranchSelection))
 			{
 				isSelected = true;
@@ -831,11 +812,9 @@ namespace Roots
 					for (int i = 0; i < 4; ++i)
 					{
 						temp[i] = randomColorLoopUpTable[index][i];
-						//temp[i] = ColorTable::getComponentColor(index)[i];
 					}
 					nodeColor = temp;
 				}
-				//if (selectPrimaryNodesValid)//&& (temp == PrimaryNodes.back().second))
 				if (showPrimaryNodes)
 				{
 					isSelected = true;
@@ -872,7 +851,6 @@ namespace Roots
 			if (degree == 0)
 			{
 				drawCube.fancierDraw(nodeColor, node->x(), node->y(), node->z(), scale);
-				// std::cout << "drawNode degree = 0" << std::endl;
 			}
 			else
 			{
@@ -945,10 +923,7 @@ namespace Roots
 			if (it != PrimaryNodes.end())
 			{
 				isSelected = true;
-				//std::cout << "nodepickrender pri node" << std::endl;
 			}
-
-			//if (!PrimaryBranchesNode.empty() && (std::find(PrimaryBranchesNode.begin(), PrimaryBranchesNode.end(), *mvi.first) != PrimaryBranchesNode.end()))
 			if (PrimaryBranchSelectionValid && (*mvi.first == PrimaryBranchSelection))
 			{
 				isSelected = true;
@@ -985,7 +960,6 @@ namespace Roots
 			else
 			{
 				drawSphere.pickDraw(nodeIdColor, node->x(), node->y(), node->z(), scale);
-				//std::cout << "test draw node 2333 " << std::endl;
 			}
 		}
 
@@ -1067,8 +1041,6 @@ namespace Roots
 				}
 			}
 		}
-
-		//std::cout << "drawboxes" << std::endl;
 		if (showSuggestedNode && auto_node.size() > 0)
 		{
 			for (int i = 0; i < auto_node.size(); ++i)
@@ -1085,31 +1057,10 @@ namespace Roots
 	{
 		if (useArcball)
 		{
-			//glMatrixMode(GL_MODELVIEW);
 			glTranslatef(eyeShiftX, eyeShiftY, -mSkeleton.mRadius * 2);
 			arcball_rotate();
 			glTranslatef(-viewCenter.x(), -viewCenter.y(), -viewCenter.z());
 		}
-
-		/*
-		if (isDisplaySelectedSegment())
-		{
-			//getClipPlane();
-			glEnable(GL_CLIP_PLANE0);
-			glEnable(GL_CLIP_PLANE1);
-			GLdouble *c = new GLdouble[4];
-			for (int i = 0; i < 4; ++i)
-			{
-				c[i] = rootClipPlaneNormal[0][i];
-			}
-			glClipPlane(GL_CLIP_PLANE0, c);
-			for (int i = 0; i < 4; ++i)
-			{
-				c[i] = rootClipPlaneNormal[1][i];
-			}
-			glClipPlane(GL_CLIP_PLANE1, c);
-		}*/
-
 		glEnable(GL_LIGHTING);
 		drawNodes();
 		glDisable(GL_LIGHTING);
@@ -1117,13 +1068,6 @@ namespace Roots
 		drawBoxes();
 		glGetFloatv(GL_MODELVIEW_MATRIX, modelViewTransform);
 		glGetFloatv(GL_PROJECTION_MATRIX, projectionTransform);
-		/*
-		if (isDisplaySelectedSegment())
-		{
-			glDisable(GL_CLIP_PLANE0);
-			glDisable(GL_CLIP_PLANE1);
-		}*/
-
 		if (displayMesh)
 		{
 			alphaMesh.render();

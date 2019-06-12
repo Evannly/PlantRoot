@@ -2,14 +2,6 @@
 #include <stdio.h>
 #include <iostream>
 
-
-//#ifdef WITH_OPENCV
-//	#include "opencv2/opencv.hpp"
-//	#include "opencv2/highgui.hpp"
-//#endif // WITH_OPENCV
-
-
-
 namespace
 {
 	struct mvec
@@ -857,7 +849,6 @@ namespace Roots
 				auto it = std::find_if(PrimaryNodes.begin(), PrimaryNodes.end(), 
 					[&node](const std::pair<int, MetaV>& element) { return element.second == node; });
 				if (it != PrimaryNodes.end())
-				//if (std::find(PrimaryNodes.begin(), PrimaryNodes.end(), node) != PrimaryNodes.end())
 				{
 					std::cout << "unselect node" << std::endl;
 					PrimaryNodes.erase(std::remove_if(PrimaryNodes.begin(), PrimaryNodes.end(), 
@@ -899,13 +890,6 @@ namespace Roots
 			{
 				SkelVert selectVert = operator[](it.second).mSrcVert;
 				std::cout << "vert PrimaryNodes " << it.second << std::endl;
-				/*
-				if (vertNodeMap.count(selectVert) == 0)
-				{
-					std::cout << "Creating node 1" << std::endl;
-					MetaV node = addNode(selectVert, &mSkeleton);
-					operator[](node).updateColors(nodeOptions);
-				}*/
 				std::cout << "Node 1+ " << it.second << std::endl;
 				std::cout << "Node 1- " << node << std::endl;
 			}
@@ -923,85 +907,11 @@ namespace Roots
 		{
 			privateSelectPrimaryBranches(node, operator[](node).connectedComponent);
 		}
-		/*
-		else
-		{
-			SkelVert vert;
-			isValid = false;
-			vert = selectVertByRender(mouseX, mouseY, isValid);
-			if (isValid)
-			{
-				metaEdgeIter mei = boost::edges(*this);
-				int connectedComponent = -1;
-				for (; mei.first != mei.second; ++mei)
-				{
-					BMetaEdge *edge = &operator[](*mei.first);
-					for (SkelVert v : edge->mVertices)
-					{
-						if (vert == v)
-						{
-							connectedComponent = edge->connectedComponent;
-							break;
-						}
-					}
-					if (connectedComponent != -1)
-					{
-						break;
-					}
-				}
-				std::cout << "vert " << vert << std::endl;
-				std::cout << "vertNodeMap[vert] " << vertNodeMap[vert] << std::endl;
-				if (vertNodeMap.count(vert) > 0)
-					node = vertNodeMap[vert];
-				else
-					node = 999999;
-				privateSelectPrimaryBranches(node, connectedComponent);
-			}
-		}*/
-
-		/*
-		if (isValid)
-		{
-			if (!PrimaryBranchesNode.empty())
-			{
-				//if there is an existing selected node we want to unselect it
-				if (std::find(PrimaryBranchesNode.begin(), PrimaryBranchesNode.end(), node) != PrimaryBranchesNode.end())
-				{
-					std::cout << "unselect node" << std::endl;
-					PrimaryBranchesNode.erase(std::remove(PrimaryBranchesNode.begin(), PrimaryBranchesNode.end(), node), PrimaryBranchesNode.end());
-					//unselectEdge(edge);
-				}
-				//elsewise, add new edge
-				else
-				{
-					std::cout << "add new node" << std::endl;
-					PrimaryBranchesNode.push_back(node);
-					//selectEdge(edge);
-					isNewEdgeAdded = true;
-				}
-			}
-			else
-			{
-				std::cout << "No existing node" << std::endl;
-				PrimaryBranchesNode.push_back(node);
-				//selectEdge(edge);
-				isNewEdgeAdded = true;
-			}
-		}*/
 		if (PrimaryBranchSelectionValid)
 		{
-			// MetaV srcNode0 = vertNodeMap[edge.mVertices[0]];
+
 			SkelVert selectVert = operator[](node).mSrcVert;
 			std::cout << "Primary Branch end node " << node << std::endl;
-			/*
-			if (vertNodeMap.count(PrimaryBranchSelection) == 0)
-			{
-				std::cout << "Creating node 1" << std::endl;
-				node = addNode(PrimaryBranchSelection, &mSkeleton);
-				std::cout << "test node " << std::endl;
-				operator[](node).updateColors(nodeOptions, false);
-				std::cout << "test update " << std::endl;
-			}*/
 			std::cout << "Node 1- " << node << std::endl;
 		}
 
@@ -1012,14 +922,6 @@ namespace Roots
 		std::cout << "privateSelectPrimaryBranches begin" << std::endl;
 		MetaV v;
 		MetaV source = PrimaryNodes[CurrentPrimaryNode].second;
-		/*
-		MetaE edge;
-		BMetaEdge *Medge = &operator[](edge);
-		for (int i = 0; i < Medge->indicesList.size(); ++i)
-		{
-			std::cout >> (Medge->indicesList[i]) >> std::endl;
-		}*/
-		
 		std::cout << "test 1 " << std::endl;
 		if (PrimaryBranchSelectionValid)
 		{
@@ -1030,7 +932,6 @@ namespace Roots
 				for (MetaV u = CurrentPredecessors[v]; u != v; v = u, u = CurrentPredecessors[v])
 				{
 					std::pair<MetaE, bool> edge_pair = boost::edge(u, v, *this);
-					//shourtestPath.push_back(edge_pair.first);
 					unhighLightEdge(edge_pair.first);
 				}
 				std::cout << "test 2 " << std::endl;
@@ -1044,7 +945,6 @@ namespace Roots
 				for (MetaV u = CurrentPredecessors[v]; u != v; v = u, u = CurrentPredecessors[v])
 				{
 					std::pair<MetaE, bool> edge_pair = boost::edge(u, v, *this);
-					//shourtestPath.push_back(edge_pair.first);
 					unhighLightEdge(edge_pair.first);
 				}
 				v = target;
@@ -1052,7 +952,6 @@ namespace Roots
 				for (MetaV u = CurrentPredecessors[v]; u != v; v = u, u = CurrentPredecessors[v])
 				{
 					std::pair<MetaE, bool> edge_pair = boost::edge(u, v, *this);
-					//shourtestPath.push_back(edge_pair.first);
 					highLightEdge(edge_pair.first);
 				}
 				std::cout << "test 333 " << std::endl;
@@ -1067,7 +966,6 @@ namespace Roots
 			for (MetaV u = CurrentPredecessors[v]; u != v; v = u, u = CurrentPredecessors[v])
 			{
 				std::pair<MetaE, bool> edge_pair = boost::edge(u, v, *this);
-				//shourtestPath.push_back(edge_pair.first);
 				highLightEdge(edge_pair.first);
 			}
 			std::cout << "test 5 " << std::endl;
@@ -1288,72 +1186,6 @@ namespace Roots
 		return shourtestPath;
 	}
 
-	/*
-	void BMetaGraph::viewNodeInfoAction(int mouseX, int mouseY)
-	{
-		SkelVert vert;
-		MetaV node;
-		bool isValid = false;
-
-		node = selectNodeByRender(mouseX, mouseY, isValid);
-
-		if (isValid)
-		{
-			if (viewNodeInfoValid && node == nodeToView)
-			{
-				viewNodeInfoValid = false;
-			}
-			else
-			{
-				nodeToView = node;
-				vert = operator[](node).mSrcVert;
-				viewNodeInfoValid = true;
-			}
-		}
-		else
-		{
-			isValid = false;
-			vert = selectVertByRender(mouseX, mouseY, isValid);
-			std::cout << "selectVertByRender done " << std::endl;
-			std::cout << "vert " << vert << std::endl;
-			if (isValid)
-			{
-				if (viewNodeInfoValid && vert == operator[](nodeToView).mSrcVert)
-					viewNodeInfoValid = false;
-				else
-				{
-					viewNodeInfoValid = true;
-					if (vertNodeMap.count(vert) > 0)
-					{
-						node = vertNodeMap[vert];
-					}
-					else
-					{
-						node = 999999;
-					}
-				}
-			}
-		}
-
-		if (viewNodeInfoValid)
-		{
-			std::cout << "Node haha " << node << std::endl;
-			if (vertNodeMap.count(node) == 0)
-			{
-				std::cout << "Creating node 111 " << std::endl;
-				// vert = operator[](node).mSrcVert;
-				nodeToView = addNode(vert, &mSkeleton);
-				operator[](nodeToView).connectedComponent = operator[](node).connectedComponent;
-				operator[](nodeToView).updateColors(nodeOptions);
-				std::cout << "node after " << nodeToView << std::endl;
-			}
-			std::cout << "nodeWidth " << operator[](nodeToView).nodeWidth << std::endl;
-			std::cout << "thickness " << operator[](nodeToView).nodeThickness << std::endl;
-			std::cout << "p[:] " << operator[](nodeToView).p[0] << " " << operator[](nodeToView).p[1] << " " << operator[](nodeToView).p[2] << std::endl;
-		}
-	}*/
-
-
 	void BMetaGraph::viewNodeInfoAction(int mouseX, int mouseY)
 	{
 		MetaV node;
@@ -1568,34 +1400,6 @@ namespace Roots
 		glFinish();
 
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
-//#ifdef WITH_OPENCV
-//		unsigned char img[480000];
-//		glReadPixels(mouseX - 200, mouseY - 200, 400, 400, GL_RGB, GL_UNSIGNED_BYTE, img);
-//
-//		cv::Mat clickMat = cv::Mat(400, 400, CV_8UC3);
-//
-//		uchar *clickptr = clickMat.ptr<uchar>();
-//		uchar *imgptr;
-//		for (int row = 0; row < 400; ++row)
-//		{
-//			clickptr = clickMat.ptr<uchar>(399 - row);
-//			imgptr = img + 3 * 400 * row;
-//			for (int col = 0; col < 400; ++col)
-//			{
-//				for (int c = 0; c < 3; ++c)
-//				{
-//					clickptr[col * 3 + c] = imgptr[col * 3 + c];
-//				}
-//			}
-//		}
-//
-//		cv::namedWindow("clickArea", CV_WINDOW_NORMAL);
-//		cv::imshow("clickArea", clickMat);
-//		cv::waitKey();
-//#endif // WITH_OPENCV
-
-		
 		unsigned char data[3];
 		glReadPixels(mouseX, mouseY, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, data);
 		int pickedID =
@@ -1838,7 +1642,6 @@ namespace Roots
 
 		isValid = false;
 		return *(--mei.first);
-		//return std::make_pair<MetaV, MetaV>(0, 1);
 	}
 
 
@@ -1861,7 +1664,6 @@ namespace Roots
 		selectPrimaryNodesValid = false;
 		selectSegmentPoint1Valid = false;
 		selectSegmentPoint2Valid = false;
-		//unselectAllEdges();
 
 		if (breakEdgeValid)
 		{
