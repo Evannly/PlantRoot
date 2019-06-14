@@ -323,7 +323,9 @@ namespace Roots{
 		float rootClipPlaneNormal[2][4] = {0};
 		
 		bool showSuggestedNode;
+		bool showClusterInput;
 		std::vector<BoundingBox> auto_node;
+		std::vector<MetaV> cluster_input;
 		bool showPrimaryNodes;
 		std::vector< std::pair<int, MetaV> > PrimaryNodes;
 		bool selectPrimaryNodesValid;
@@ -421,6 +423,7 @@ namespace Roots{
 		void setEdgeScale(float scale);
 		void magnifyNonBridges(bool doMagnify);
 		void showOnlyNonBridges(bool showOnly);
+		void displayLongEdges(bool colorWhite);
 		void colorizeEdgesByThickness();
 		void colorizeEdgesByWidth();
 		void colorizeEdgesByRatio();
@@ -456,6 +459,7 @@ namespace Roots{
 		void setDisplaySuggestedStem(bool doShow);
 		void setDisplayPrimaryNodes(bool doShowPriamryStem);
 		void setDisplaySuggestedNode(bool doShow);
+		void setDisplayClusterInput(bool doShow);
 		void setCurrentPrimaryNode(int layer);
 		void setDisplayConfirmedPrimaryBranches(bool doShowConfirmedBranches);
 		void setRandomColorizePrimaryNodes(bool doShow);
@@ -747,7 +751,11 @@ namespace Roots{
 		Automatically find priamry nodes
 		*/
 		void FindPrimaryNodeOperation(float look_distance, float kernel_bandwidth);
+		float getRelativeDistance(SkelVert sv1, SkelVert sv2);
+		bool vertexIsOutOfRadiusRange(SkelVert src, std::deque<SkelVert> stem, float timesThickness);
 		bool branchLongerThanThreshold(MetaV prev, MetaV self, float threshold);
+		bool branchGoesOutOfStemEdge(std::set<MetaV> *visited, std::deque<SkelVert> stem, MetaV prev, MetaV self, float threshold);
+		void findLoopBackPoints(std::set<MetaV> *loop_back_points, std::set<MetaV> *visited, MetaV root, MetaV parent, std::vector<MetaV> auto_stem_metaNode);
 		std::vector<float> neighbourhoodPoints(std::vector<float> positions, float x_centroid, float distance = 5);
 		float gaussian_kernal(float distance, int bandwidth);
 

@@ -52,6 +52,11 @@ namespace Roots
 		std::cout << "Show only non-bridges " << std::to_string(showOnly) << std::endl;
 	}
 
+	void BMetaGraph::displayLongEdges(bool colorWhite)
+	{
+		return;
+	}
+
 	void BMetaGraph::assignEdgeHeatMap(boost::python::list heatmap)
 	{
 		edgeOptions.heatmap = {};
@@ -373,6 +378,13 @@ namespace Roots
 	void BMetaGraph::setDisplaySuggestedNode(bool doShow)
 	{
 		showSuggestedNode = doShow;
+		buildEdgeVBOs();
+	}
+
+	void BMetaGraph::setDisplayClusterInput(bool doShow)
+	{
+		showClusterInput = doShow;
+		std::cout << "showClusterInput: " << doShow << std::endl;
 		buildEdgeVBOs();
 	}
 
@@ -739,6 +751,13 @@ namespace Roots
 		{
 			BMetaNode *node = &operator[](*mvi.first);
 			int degree = boost::degree(*mvi.first, *this);
+
+			if (showClusterInput) {
+				if (std::find(cluster_input.begin(), cluster_input.end(), *mvi.first) == cluster_input.end())
+				{
+					continue;
+				}
+			}
 
 			if ((degree == 1 && !nodeOptions.showEndpoints) || (degree > 2 && !nodeOptions.showJunctions) || degree == 2)
 			{
