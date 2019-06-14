@@ -2343,8 +2343,8 @@ namespace Roots
 		// BFS to find all vertices whose thickness >= lowThreshold
 		std::set<SkelVert> visitedMap;
 		visitedMap.insert(vertMaxWidth);
-		std::set<SkelVert> selectedVert;
-		selectedVert.insert(vertMaxWidth);
+		std::set<SkelVert> mstNodes;
+		mstNodes.insert(vertMaxWidth);
 		std::deque<SkelVert> queVert;
 		queVert.push_back(vertMaxWidth);
 
@@ -2363,18 +2363,18 @@ namespace Roots
 				if (getVertWidth(leadVert, &mSkeleton) >= lowThreshold && visitedMap.find(leadVert) == visitedMap.end())
 				{
 					visitedMap.insert(leadVert);
-					selectedVert.insert(leadVert);
+					mstNodes.insert(leadVert);
 					queVert.push_back(leadVert);
 				}
 			}
 		}
-		std::cout << " size of selectedVert " << selectedVert.size() << std::endl;
+		std::cout << " size of selectedVert " << mstNodes.size() << std::endl;
 
 		std::vector<SkelEdge> selectedEdge;
 		skelEdgeIter sei = boost::edges(mSkeleton);
 		for (; sei.first != sei.second; ++sei) {
 			skelEIter e = sei.first;
-			if (selectedVert.find(e->m_source) != selectedVert.end() && selectedVert.find(e->m_target) != selectedVert.end()) { 
+			if (mstNodes.find(e->m_source) != mstNodes.end() && mstNodes.find(e->m_target) != mstNodes.end()) { 
 				selectedEdge.push_back(*e);
 			}
 		}
@@ -2412,7 +2412,6 @@ namespace Roots
 
 		//burn time to single point. inverse burn: start with highest burn time.
 		//only look at node with one minus current burn time
-		std::set<SkelVert> mstNodes;
 		typedef boost::adjacency_list<boost::listS, boost::vecS, boost::undirectedS> subGraph;
 		subGraph mstGraph;
 		typedef boost::graph_traits<subGraph>::vertex_descriptor subV;
@@ -2422,12 +2421,6 @@ namespace Roots
 
 		//map mst subGraph to skeleton vertex
 		std::vector<int> SkelVertToMSTMap(mSkeleton.m_vertices.size(), -1);
-		for (SkelEdge se : stemMinimumSpanningTree)
-		{
-			mstNodes.insert(se.m_source);
-			mstNodes.insert(se.m_target);
-		}
-		std::cout << "mstNodes " << mstNodes.size() << std::endl;
 		std::vector<int> MSTToSkelVertMap(mstNodes.size(), -1);
 		for (SkelVert sv : mstNodes)	// add vertices to mst graph
 		{
