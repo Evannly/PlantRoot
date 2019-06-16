@@ -52,11 +52,6 @@ namespace Roots
 		std::cout << "Show only non-bridges " << std::to_string(showOnly) << std::endl;
 	}
 
-	void BMetaGraph::displayLongEdges(bool colorWhite)
-	{
-		return;
-	}
-
 	void BMetaGraph::assignEdgeHeatMap(boost::python::list heatmap)
 	{
 		edgeOptions.heatmap = {};
@@ -388,6 +383,13 @@ namespace Roots
 		buildEdgeVBOs();
 	}
 
+	void BMetaGraph::setDisplayTracingPrimaryBranches(bool doTrace)
+	{
+		tracePrimaryBranches = doTrace;
+		std::cout << "tracePrimaryBranches: " << doTrace << std::endl;
+		buildEdgeVBOs();
+	}
+
 	void BMetaGraph::setCurrentPrimaryNode(int node)
 	{
 		std::cout << "CurrentPrimaryNode " << CurrentPrimaryNode << std::endl;
@@ -636,6 +638,17 @@ namespace Roots
 			}
 		}
 
+		if (tracePrimaryBranches && auto_node.size() != 0)
+		{
+			for (std::vector<MetaE>::reverse_iterator riter = primary_branches.rbegin(); riter != primary_branches.rend(); ++riter)
+			{
+				MetaV u_tmp = boost::source(*riter, *this);
+				MetaV v_tmp = boost::target(*riter, *this);
+				MetaE e_tmp = boost::edge(u_tmp, v_tmp, *this).first;
+				colorEdge(e_tmp, RED);
+			}
+		}
+
 		if (showStem && stemSelected)
 		{
 			for (std::vector<MetaE>::reverse_iterator riter = StemPath.rbegin(); riter != StemPath.rend(); ++riter)
@@ -643,7 +656,6 @@ namespace Roots
 				MetaV u_tmp = boost::source(*riter, *this);
 				MetaV v_tmp = boost::target(*riter, *this);
 				MetaE e_tmp = boost::edge(u_tmp, v_tmp, *this).first;
-				//highLightEdge(e_tmp);
 				colorEdge(e_tmp, GREEN);
 			}
 		}

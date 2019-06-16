@@ -313,9 +313,11 @@ namespace Roots{
 
 		bool showSuggestedStem;
 		bool showStem;
+		bool tracePrimaryBranches;
 		std::vector<MetaE> StemPath;
 		std::vector<MetaV> StemPath_node;
 		std::vector<SkelEdge> auto_stem;
+		std::vector<MetaE> primary_branches;
 		
 		MetaV selectStemStart, selectStemEnd;
 		bool selectStemStartValid, selectStemEndValid;
@@ -343,6 +345,7 @@ namespace Roots{
 		GLfloat RED[4] = { 1.0, 0.0, 0.0, 1.0 };
 		GLfloat GREEN[4] = { 0.0, 1.0, 0.0, 1.0 };
 		GLfloat BLUE[4] = { 0.0, 0.0, 1.0, 1.0 };
+		GLfloat WHITE[4] = { 1.0, 1.0, 1.0, 1.0 };
 		std::vector<std::vector<GLfloat>> randomColorLoopUpTable{
 			{0.824f, 0.961f, 0.235f, 1.0f},
 			{0.569f, 0.118f, 0.706f, 1.0f},
@@ -423,7 +426,6 @@ namespace Roots{
 		void setEdgeScale(float scale);
 		void magnifyNonBridges(bool doMagnify);
 		void showOnlyNonBridges(bool showOnly);
-		void displayLongEdges(bool colorWhite);
 		void colorizeEdgesByThickness();
 		void colorizeEdgesByWidth();
 		void colorizeEdgesByRatio();
@@ -460,6 +462,7 @@ namespace Roots{
 		void setDisplayPrimaryNodes(bool doShowPriamryStem);
 		void setDisplaySuggestedNode(bool doShow);
 		void setDisplayClusterInput(bool doShow);
+		void setDisplayTracingPrimaryBranches(bool doTrace);
 		void setCurrentPrimaryNode(int layer);
 		void setDisplayConfirmedPrimaryBranches(bool doShowConfirmedBranches);
 		void setRandomColorizePrimaryNodes(bool doShow);
@@ -754,10 +757,11 @@ namespace Roots{
 		float getRelativeDistance(SkelVert sv1, SkelVert sv2);
 		bool vertexIsOutOfRadiusRange(SkelVert src, std::deque<SkelVert> stem, float timesThickness);
 		bool branchLongerThanThreshold(MetaV prev, MetaV self, float threshold);
-		bool branchGoesOutOfStemEdge(std::set<MetaV> *visited, std::deque<SkelVert> stem, MetaV prev, MetaV self, float threshold);
-		void findLoopBackPoints(std::set<MetaV> *loop_back_points, std::set<MetaV> *visited, MetaV root, MetaV parent, std::vector<MetaV> auto_stem_metaNode);
+		bool branchGoesOutOfRadiusBoundary(std::set<MetaV> *visited, std::deque<SkelVert> stem, MetaV prev, MetaV self, float threshold);
+		void traceBranch(MetaV parent, MetaV curr, float windowSize, float cosineThreshold);
+		std::tuple<float, float, float> getDirectionVector(MetaV source, MetaV target, float windowSize, std::string headOrTail);
 		std::vector<float> neighbourhoodPoints(std::vector<float> positions, float x_centroid, float distance = 5);
-		float gaussian_kernal(float distance, int bandwidth);
+		float gaussian_kernel(float distance, int bandwidth);
 
 	private:
 
