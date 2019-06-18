@@ -2672,9 +2672,7 @@ namespace Roots
 			std::pair<MetaE, bool> edge_pair = boost::edge(u, v, *this);
 			StemPath.push_back(edge_pair.first);
 		}
-
 		std::cout << std::endl;
-		//std::cout << "distance from start to end:" << distances[mSkeleton[operator[](selectStemStart).mSrcVert].id] <<std::endl;
 		double distance = 0;
 		MetaV v_tmp;
 		for (std::vector<MetaE>::reverse_iterator riter = StemPath.rbegin(); riter != StemPath.rend(); ++riter)
@@ -2713,7 +2711,6 @@ namespace Roots
 
 		// find a list of meta vertices on the stem. Record their position
 		std::vector<float> cluster_input_position;
-		//std::vector<MetaV> cluster_input;
 
 		if (!StemPath.empty()) // User has selected a stem
 		{
@@ -2758,8 +2755,8 @@ namespace Roots
 
 		else // User hasn't selected a stem
 		{
-			std::cout << "Auto stem found " << std::endl;
 			std::vector<MetaV> auto_stem_metaNode;
+			std::cout << "Auto stem found " << std::endl;
 
 			// Topologically sort all the skeleton vertices in auto_stem 
 			std::map<SkelVert, std::vector<SkelVert>> m;
@@ -2808,51 +2805,43 @@ namespace Roots
 			// Exclude short branches which are recognized as noises
 			for (size_t i = 0; i < auto_stem_metaNode.size(); ++i)
 			{
-				int validBranches = 0;
+				int validBranchesOnNode = 0;
 				typename graph_traits<BoostMetaGraph>::out_edge_iterator ei, ei_end;
 				for (boost::tie(ei, ei_end) = out_edges(auto_stem_metaNode[i], *this); ei != ei_end; ++ei) {
 					MetaV target = boost::target(*ei, *this);
 					MetaV prev = (i == 0) ? -1 : auto_stem_metaNode[i - 1];
 					MetaV next = (i == auto_stem_metaNode.size() - 1) ? -1 : auto_stem_metaNode[i + 1];
 					if (target != prev && target != next) {
-
 						std::cout << "Node " << auto_stem_metaNode[i] << " has a side branch to " << target;
-
-						/* vvv DON'T CONSIDER LOOPS AND USE THE PATH LENGTH vvv */
-
-						//std::pair<MetaE, bool> edge_pair = boost::edge(auto_stem_metaNode[i], target, *this);
-						//float distance = operator[](edge_pair.first).mLength;
-						//float threshold = getVertThickness(operator[](auto_stem_metaNode[i]).mSrcVert, &mSkeleton);
-						//if (branchLongerThanThreshold(auto_stem_metaNode[i], target, 2.0f * threshold - distance)) {
-						//	std::cout << " with max length larger than 2.0 * threshold";
-						//	isValidPrimaryNode = true;
-						//}
-						//std::cout << std::endl;
-
-						/* vvv CONSIDER LOOPS AND USE THE SHORTEST ABSOLUTE DISTANCE TO STEM vvv */
-
 						if (auto_stem_metaNode[i] != target) {
 							std::set<MetaV> visited;
-							if (branchGoesOutOfRadiusBoundary(&visited, sequence, auto_stem_metaNode[i], target, 2.0f)) {
-								std::cout << " that passes through the stem surface";
-								validBranches++;
+							if (branchExceedsStemBoundary(&visited, sequence, auto_stem_metaNode[i], target, 2.0f)) {
+								std::cout << " that exceeds the stem boundary";
+								validBranchesOnNode++;
 								primary_branches.push_back(*ei);
 
-								//Trace branches
-								traceBranch(auto_stem_metaNode[i], target, 15.0f, 0.707f);
+								// Trace branches
+								std::set<MetaV> visitedWhenTracingBranch;
+								for (MetaV mv : auto_stem_metaNode) {
+									visitedWhenTracingBranch.insert(mv);
+								}
+								traceBranch(auto_stem_metaNode[i], target, sequence, &visitedWhenTracingBranch, 10.0f, 0.707f);
 							}
 							std::cout << std::endl;
 						}
 					}
 				}
-				for (int j = 0; j < validBranches; ++j) {
+
+				// Put the position values into the input vector, each repeating j times 
+				// with j being the number of valid branches on the node
+				for (int j = 0; j < validBranchesOnNode; ++j) {
 					cluster_input_position.push_back(auto_stem_metaDist[i]);
 					cluster_input.push_back(auto_stem_metaNode[i]);
 				}
 			}
 		}
 
-		// mean shift clustering
+		// Mean shift clustering
 		std::vector<float> cluster = cluster_input_position;
 		std::cout << "initial position" << std::endl;
 		for (float position : cluster)
@@ -2888,9 +2877,7 @@ namespace Roots
 			std::cout << std::endl << std::endl;
 		}
 
-		// find corresponding meta vertices of vector X
-
-		// delete the clusters that associate to only two or less vertices
+		// Delete the clusters that associate to only two or less vertices
 		std::map<float, int> count;
 		for (float f : cluster) ++count[f];
 		std::vector<float> newCluster;
@@ -2901,14 +2888,14 @@ namespace Roots
 		}
 		cluster = newCluster;
 
-		// remove duplicates
+		// Remove duplicates
 		cluster.erase(std::unique(cluster.begin(), cluster.end()), cluster.end());
 		std::cout << std::endl << "cluster size: " << cluster.size() << std::endl;
 		std::cout << "cluster input size: " << cluster_input_position.size() << std::endl;
 		for (int i = 0; i < cluster.size(); ++i)
 		{
 			std::cout << i << std::endl;
-			// find index accoring to distance
+			// Find index according to distance
 			auto low = std::lower_bound(cluster_input_position.begin(), cluster_input_position.end(), cluster[i]);
 			if (low == cluster_input_position.end()) {
 				low--;
@@ -2927,7 +2914,7 @@ namespace Roots
 				std::cout << "node position: " << cluster_input_position[node_index] << std::endl;
 			}
 
-			//find node according to index
+			// Find node according to index
 			BoundingBox b;
 			BMetaNode *node = &operator[](cluster_input[node_index]);
 
@@ -2947,9 +2934,13 @@ namespace Roots
 	}
 
 	bool BMetaGraph::branchLongerThanThreshold(MetaV prev, MetaV self, float threshold) {
+		
+		// Base case: the length of the path traced exceeds the threshold
 		if (threshold < 0) {
 			return true;
 		}
+
+		// General case: trace down the tree and deduct each edge length along the path from the threshold (until it reaches 0)
 		typename graph_traits<BoostMetaGraph>::out_edge_iterator ei, ei_end;
 		for (boost::tie(ei, ei_end) = out_edges(self, *this); ei != ei_end; ++ei) {
 			MetaV target = boost::target(*ei, *this);
@@ -2961,14 +2952,22 @@ namespace Roots
 				}
 			}
 		}
+
+		// If the entire tree is traced and no path is found to be longer than the threshold, return false
+		// WARNING: This is prone to having loops because the path length for any loop is infinity
 		return false;
 	}
 
-	bool BMetaGraph::branchGoesOutOfRadiusBoundary(std::set<MetaV> *visited, std::deque<SkelVert> stem, MetaV prev, MetaV self, float timesThickness) {
-		if (std::find((*visited).begin(), (*visited).end(), self) != (*visited).end()) {
+	bool BMetaGraph::branchExceedsStemBoundary(std::set<MetaV> *visited, std::deque<SkelVert> stem, MetaV prev, MetaV self, float timesThickness) {
+		
+		// Stop tracing if the current node is already visited
+		if ((*visited).count(self)) {
 			return false;
 		}
+
+		// Mark the current node as visited
 		(*visited).insert(self);
+
 		SkelVert srcSelf = operator[](self).mSrcVert;
 		if (vertexIsOutOfRadiusRange(srcSelf, stem, timesThickness)) {
 			return true;
@@ -2979,20 +2978,38 @@ namespace Roots
 			for (boost::tie(ei, ei_end) = out_edges(self, *this); ei != ei_end; ++ei) {
 				MetaV target = boost::target(*ei, *this);
 				if (target != prev) {
-					atLeastOneSubtreeReturnsTrue = atLeastOneSubtreeReturnsTrue || branchGoesOutOfRadiusBoundary(visited, stem, self, target, timesThickness);
+					atLeastOneSubtreeReturnsTrue = atLeastOneSubtreeReturnsTrue || branchExceedsStemBoundary(visited, stem, self, target, timesThickness);
 				}
 			}
 			return atLeastOneSubtreeReturnsTrue;
 		}
 	}
 
-	void BMetaGraph::traceBranch(MetaV parent, MetaV curr, float windowSize, float cosineThreshold) {
+	void BMetaGraph::traceBranch(MetaV parent, MetaV curr, std::deque<SkelVert> stem, std::set<MetaV> *visited, float windowSize, float cosineThreshold) {
+
+		// Stop tracing if the current node is already visited
+		if ((*visited).count(curr)) {
+			return;
+		}
+
+		// Mark the current node as visited
+		(*visited).insert(curr);
+
+		// Param: currTailVector: the direction vector at the end of the current edge, with the end being
+		//						  the target of the edge and the start being the skeleton node that is one
+		//						  windowSize length above the target of the edge
 		std::tuple<float, float, float> currTailVector = getDirectionVector(parent, curr, windowSize, "tail");
 		typename graph_traits<BoostMetaGraph>::out_edge_iterator ei, ei_end;
 		for (boost::tie(ei, ei_end) = out_edges(curr, *this); ei != ei_end; ++ei) {
 			MetaV target = boost::target(*ei, *this);
 			if (target != parent) {
+
+				// Param: nextHeadVector: the direction vector at the head of the current edge, with the start being
+				//						  the source of the next edge and the start being the skeleton node that is one
+				//						  windowSize length below the source of the current edge
 				std::tuple<float, float, float> nextHeadVector = getDirectionVector(curr, target, windowSize, "head");
+
+				// Obtain the cosine value of the angle between currTailVector and nextHeadVector
 				float vx1 = std::get<0>(currTailVector);
 				float vy1 = std::get<1>(currTailVector);
 				float vz1 = std::get<2>(currTailVector);
@@ -3003,9 +3020,21 @@ namespace Roots
 				float modulus1 = std::sqrt(vx1 * vx1 + vy1 * vy1 + vz1 * vz1);
 				float modulus2 = std::sqrt(vx2 * vx2 + vy2 * vy2 + vz2 * vz2);
 				float cosine = dotProduct / (modulus1 * modulus2);
-				if (cosine > cosineThreshold) {
+
+				// Qualifier 1: Since the part of skeleton within the stem boundary can be very messy and rugged,
+				// we don't consider the angles when it's still within the stem boundary
+				bool currIsWithinStemBoundary = !vertexIsOutOfRadiusRange(operator[](target).mSrcVert, stem, 1.0f);
+
+				// Qualifier 2: However, there are some branches that are obviously noises no matter where they are.
+				// Those are the ones that are short and with a target node being an endpoint.
+				// Now we define short as having a length smaller than 2 * windowSize.
+				bool isNoise = boost::degree(target, *this) == 1 && operator[](boost::edge(curr, target, *this).first).mLength < 2.0f * windowSize;
+
+				// Taking the angle and two qualifiers into account, we decide whether the edge is a valid next edge
+				// for the branch we are currently tracing, and recursively trace along the edge we just added.
+				if ((cosine > cosineThreshold || currIsWithinStemBoundary) && !isNoise) {
 					primary_branches.push_back(boost::edge(curr, target, *this).first);
-					traceBranch(curr, target, windowSize, cosineThreshold);
+					traceBranch(curr, target, stem, visited, windowSize, cosineThreshold);
 				}
 			}
 		}
@@ -3013,9 +3042,16 @@ namespace Roots
 
 	std::tuple<float, float, float> BMetaGraph::getDirectionVector(MetaV source, MetaV target, float windowSize, std::string headOrTail) {
 		std::vector<SkelVert> subVertices = operator[](boost::edge(source, target, *this).first).mVertices;
+
+		// If the order of the subVertices is reversed, reverse it back
+		// so that the vertex at position 0 matches the source
 		if (subVertices[0] == operator[](target).mSrcVert) {
 			std::reverse(subVertices.begin(), subVertices.end());
 		}
+
+		// Find windowHead and windowTail according to windowSize
+		// Iteratively deduct the edge length from the windowSize until the windowHead/windowTail is found
+		// or it reaches the bounds of the array (when the current metaEdge has a length smaller than windowSize)
 		SkelVert windowTail;
 		SkelVert windowHead;
 		if (headOrTail == "tail") {
@@ -3042,6 +3078,8 @@ namespace Roots
 			windowHead = operator[](source).mSrcVert;
 			windowTail = *tempTargetIter;
 		}
+
+		// Calculate the three components of the vector and return it as a tuple
 		float deltaX = (&mSkeleton)->operator[](windowTail).x() - (&mSkeleton)->operator[](windowHead).x();
 		float deltaY = (&mSkeleton)->operator[](windowTail).y() - (&mSkeleton)->operator[](windowHead).y();
 		float deltaZ = (&mSkeleton)->operator[](windowTail).z() - (&mSkeleton)->operator[](windowHead).z();

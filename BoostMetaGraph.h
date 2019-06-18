@@ -757,8 +757,8 @@ namespace Roots{
 		float getRelativeDistance(SkelVert sv1, SkelVert sv2);
 		bool vertexIsOutOfRadiusRange(SkelVert src, std::deque<SkelVert> stem, float timesThickness);
 		bool branchLongerThanThreshold(MetaV prev, MetaV self, float threshold);
-		bool branchGoesOutOfRadiusBoundary(std::set<MetaV> *visited, std::deque<SkelVert> stem, MetaV prev, MetaV self, float threshold);
-		void traceBranch(MetaV parent, MetaV curr, float windowSize, float cosineThreshold);
+		bool branchExceedsStemBoundary(std::set<MetaV> *visited, std::deque<SkelVert> stem, MetaV prev, MetaV self, float threshold);
+		void traceBranch(MetaV parent, MetaV curr, std::deque<SkelVert> stem, std::set<MetaV> *visited, float windowSize, float cosineThreshold);
 		std::tuple<float, float, float> getDirectionVector(MetaV source, MetaV target, float windowSize, std::string headOrTail);
 		std::vector<float> neighbourhoodPoints(std::vector<float> positions, float x_centroid, float distance = 5);
 		float gaussian_kernel(float distance, int bandwidth);
