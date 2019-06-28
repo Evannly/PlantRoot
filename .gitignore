@@ -241,3 +241,19 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
+CMakeCache.txt
+CMakeFiles/3.15.0-rc3/CMakeCCompiler.cmake
+CMakeFiles/3.15.0-rc3/CMakeCXXCompiler.cmake
+CMakeFiles/3.15.0-rc3/CMakeDetermineCompilerABI_C.bin
+CMakeFiles/3.15.0-rc3/CMakeDetermineCompilerABI_CXX.bin
+CMakeFiles/3.15.0-rc3/CMakeRCCompiler.cmake
+CMakeFiles/3.15.0-rc3/CMakeSystem.cmake
+CMakeFiles/3.15.0-rc3/CompilerIdC/CMakeCCompilerId.c
+CMakeFiles/3.15.0-rc3/CompilerIdC/CompilerIdC.exe
+CMakeFiles/3.15.0-rc3/CompilerIdC/CompilerIdC.vcxproj
+CMakeFiles/3.15.0-rc3/CompilerIdCXX/CMakeCXXCompilerId.cpp
+CMakeFiles/3.15.0-rc3/CompilerIdCXX/CompilerIdCXX.exe
+CMakeFiles/3.15.0-rc3/CompilerIdCXX/CompilerIdCXX.vcxproj
+CMakeFiles/3.15.0-rc3/VCTargetsPath.txt
+CMakeFiles/3.15.0-rc3/VCTargetsPath.vcxproj
+CMakeFiles/cmake.check_cache
