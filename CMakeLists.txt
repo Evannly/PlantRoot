@@ -25,7 +25,7 @@ set(BOOST_INCLUDEDIR "${DEPENDENCIES_DIR}/boost_1_68_0/boost" CACHE PATH "Boost 
 set(BOOST_ROOT "${DEPENDENCIES_DIR}/boost_1_68_0" CACHE PATH "Boost root directory" FORCE)
 
 set(GLFW_INCLUDEDIR "${DEPENDENCIES_DIR}/glfw-3.3.bin.WIN64/include" CACHE PATH "GLFW include directory")
-set(GLFW_LIB "${DEPENDENCIES_DIR}/glfw-3.3.bin.WIN64/lib-vc2017/glfw3.lib" CACHE STRING "glfw compiled library")
+set(GLFW_LIB "${DEPENDENCIES_DIR}/glfw-3.3.bin.WIN64/lib-vc2015/glfw3.lib" CACHE STRING "glfw compiled library")
 set(GLAD_INCLUDEDIR "${DEPENDENCIES_DIR}/glad/include" CACHE PATH "GLAD include directory")
 
 set(BoostPythonLib "${DEPENDENCIES_DIR}/boost_1_68_0/stage/lib/libboost_python37-vc141-mt-gd-x64-1_68.lib" CACHE STRING "boost python library")
