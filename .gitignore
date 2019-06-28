@@ -17,3 +17,11 @@
 *.list
 db.lock
 CMakeFiles/3.15.0-rc3/CompilerIdCXX/CMakeCXXCompilerId.cpp
+.vs/RootsToolC/v15/.suo
+.vs/RootsToolC/v15/Browse.VC.db
+.vs/RootsToolC/v15/Solution.VC.db
+.vs/RootsToolC/v15/Solution.VC.db-shm
+.vs/RootsToolC/v15/Solution.VC.db-wal
+RootsEXE.dir/Debug/vc141.pdb
+RootsTool.dir/Debug/vc141.pdb
+RootsTool.vcxproj.user
