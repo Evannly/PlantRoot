@@ -30,7 +30,7 @@ set(GLAD_INCLUDEDIR "${DEPENDENCIES_DIR}/glad/include" CACHE PATH "GLAD include 
 
 set(BoostPythonLib "${DEPENDENCIES_DIR}/boost_1_68_0/stage/lib/libboost_python37-vc141-mt-gd-x64-1_68.lib" CACHE STRING "boost python library")
 
-set(OpenCV_DIR "${DEPENDENCIES_DIR}/opencv/build" CACHE PATH "Opencv Include")
+set(OpenCV_DIR "${DEPENDENCIES_DIR}/opencv/build" CACHE PATH "Opencv Include" FORCE)
 option(OPENCV_ENABLE "description" OFF)
 
 if(${OPENCV_ENABLE})
@@ -41,7 +41,7 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc")
 
 find_package(Boost REQUIRED)
 
-include_directories(E:/will/boost_1_65_1)
+include_directories(${DEPENDENCIES_DIR}/boost_1_68_0)
 if (NOT "$ENV{BOOST_INCLUDE_DIRS}" STREQUAL "")
     set(BOOST_INCLUDE_DIRS "$ENV{BOOST_INCLUDE_DIRS}" CACHE STRING "Boost include directory, eg. boost_v_xx_x/boost" FORCE)
 endif()
@@ -93,7 +93,7 @@ target_link_libraries(RootsTool ${BoostPythonLib})
 
 if(${OPENCV_ENABLE})
 	target_include_directories(RootsTool PUBLIC ${OpenCV_DIR}/lib/Debug ${OpenCV_DIR}/include)
-	target_include_directories(RootsTool PUBLIC E:/will/opencv/build/include)
+	target_include_directories(RootsTool PUBLIC ${OpenCV_DIR}/include)
 	target_link_libraries(RootsTool opencv_calib3d342d.lib opencv_core342d.lib opencv_features2d342d.lib opencv_flann342d.lib opencv_highgui342d.lib opencv_imgcodecs342d.lib opencv_imgproc342d.lib opencv_ts342d.lib opencv_videoio342d.lib)
 	target_compile_definitions(RootsTool PRIVATE WITH_OPENCV=TRUE)
 endif()
@@ -117,7 +117,7 @@ target_link_libraries(RootsEXE ${PYTHON_DIR}/libs/python37.lib ${GLFW_LIB} openg
 
 if(${OPENCV_ENABLE})
 	target_include_directories(RootsEXE PUBLIC ${OpenCV_DIR}/lib/Debug ${OpenCV_DIR}/include)
-	target_include_directories(RootsTool PUBLIC E:/will/opencv/build/include)
+	target_include_directories(RootsTool PUBLIC ${OpenCV_DIR}/include)
 	# target_link_libraries(RootsEXE opencv_calib3d342d.lib opencv_core342d.lib opencv_dnn342d.lib opencv_features2d342d.lib opencv_flann342d.lib opencv_highgui342d.lib opencv_imgcodecs342d.lib opencv_imgproc342d.lib opencv_ml342d.lib opencv_objdetect342d.lib opencv_photo342d.lib opencv_shape342d.lib opencv_stitching342d.lib opencv_superres342d.lib opencv_ts342d.lib opencv_video342d.lib opencv_videoio342d.lib opencv_videostab342d.lib)
 	target_link_libraries(RootsEXE opencv_calib3d342d.lib opencv_core342d.lib opencv_features2d342d.lib opencv_flann342d.lib opencv_highgui342d.lib opencv_imgcodecs342d.lib opencv_imgproc342d.lib opencv_ts342d.lib opencv_videoio342d.lib)
 	target_compile_definitions(RootsEXE PRIVATE WITH_OPENCV=TRUE)
