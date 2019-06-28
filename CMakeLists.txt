@@ -28,7 +28,7 @@ set(GLFW_INCLUDEDIR "${DEPENDENCIES_DIR}/glfw-3.3.bin.WIN64/include" CACHE PATH 
 set(GLFW_LIB "${DEPENDENCIES_DIR}/glfw-3.3.bin.WIN64/lib-vc2017/glfw3.lib" CACHE STRING "glfw compiled library")
 set(GLAD_INCLUDEDIR "${DEPENDENCIES_DIR}/glad/include" CACHE PATH "GLAD include directory")
 
-set(BoostPythonLib "${DEPENDENCIES_DIR}/boost_1_68_0/stage/lib/libboost_python37-vc140-mt-gd-x64-1_68.lib" CACHE STRING "boost python library")
+set(BoostPythonLib "${DEPENDENCIES_DIR}/boost_1_68_0/stage/lib/libboost_python37-vc141-mt-gd-x64-1_68.lib" CACHE STRING "boost python library")
 
 set(OpenCV_DIR "${DEPENDENCIES_DIR}/opencv/build" CACHE PATH "Opencv Include")
 option(OPENCV_ENABLE "description" OFF)
