@@ -1169,6 +1169,61 @@ namespace Roots
 
 	}
 
+	void BMetaGraph::saveFairedSkeleton(std::string filename) {
+		if (mSkeleton.m_edges.size() == 0) {
+			std::cout << "Error: No skeleton found." << std::endl;
+			return;
+		}
+		BSkeleton fairedSkeleton = fairSkeleton(mSkeleton, 50);
+		std::cout << std::endl;
+		std::ofstream filestream;
+		filestream.open(filename);
+		filestream << "ply" << std::endl;
+		filestream << "format ascii 1.0" << std::endl;
+		filestream << "element vertex " << fairedSkeleton.m_vertices.size() << std::endl;
+		for (int i = 0; i < ParsingOrder::ParsingCount; ++i)
+		{
+			if (fairedSkeleton.mVertexWriteOrder[i] == ParsingOrder::X)
+			{
+				filestream << "property float32 x" << std::endl;
+			}
+			if (fairedSkeleton.mVertexWriteOrder[i] == ParsingOrder::Y)
+			{
+				filestream << "property float32 y" << std::endl;
+			}
+			if (fairedSkeleton.mVertexWriteOrder[i] == ParsingOrder::Z)
+			{
+				filestream << "property float32 z" << std::endl;
+			}
+			if (fairedSkeleton.mVertexWriteOrder[i] == ParsingOrder::Thickness)
+			{
+				filestream << "property float32 bt2" << std::endl;
+			}
+			if (fairedSkeleton.mVertexWriteOrder[i] == ParsingOrder::Width)
+			{
+				filestream << "property float32 radius" << std::endl;
+			}
+		}
+		filestream << "element edge " << fairedSkeleton.m_edges.size() << std::endl;
+		filestream << "property int32 vertex1" << std::endl;
+		filestream << "property int32 vertex2" << std::endl;
+		filestream << "element face " << fairedSkeleton.faces.size() << std::endl;
+		filestream << "property list uint8 int32 vertex_indices" << std::endl;
+		filestream << "end_header" << std::endl;
+		skelVertIter svi = boost::vertices(fairedSkeleton);
+		for (; svi.first != svi.second; ++svi) {
+			Point3d point = fairedSkeleton.operator[](*svi.first);
+			filestream << point.thickness() << " " << point.width() << " " << point.x() << " " << point.y() << " " << point.z() << std::endl;
+		}
+		skelEdgeIter sei = boost::edges(fairedSkeleton);
+		for (; sei.first != sei.second; ++sei) {
+			SkelEdge se = *sei.first;
+			filestream << se.m_source << " " << se.m_target << std::endl;
+		}
+		filestream.close();
+		std::cout << "File saved: " << filename << std::endl;
+	}
+
 	void BMetaGraph::loadTraitsFromFile(std::string filename)
 	{
 		InitializeTraitParameters();
@@ -2715,7 +2770,7 @@ namespace Roots
 		if (!StemPath.empty()) // User has selected a stem
 		{
 			std::cout << "User stem found" << std::endl;
-			float metaDist = 0; // store accumulative distance
+			float metaDist = 0; // Store accumulative distance
 
 			// Exclude the short branches which are recognized as noises
 			for (size_t i = 0; i < StemPath_node.size(); ++i)
@@ -2954,7 +3009,7 @@ namespace Roots
 		}
 
 		// If the entire tree is traced and no path is found to be longer than the threshold, return false
-		// WARNING: This is prone to having loops because the path length for any loop is infinity
+		// WARNING: This is vulnerable with loops because the path length for any loop is always infinity
 		return false;
 	}
 
@@ -2983,6 +3038,68 @@ namespace Roots
 			}
 			return atLeastOneSubtreeReturnsTrue;
 		}
+	}
+
+	BSkeleton BMetaGraph::fairSkeleton(BSkeleton skel, int iterationRound) {
+		BSkeleton currSkel = skel;
+		BSkeleton nextSkel = skel;
+		std::cout << "Fairing " << iterationRound << " rounds." << std::endl;
+		std::cout << "Fairing";
+		
+		for (int round = 0; round < iterationRound; ++round) {
+			std::cout << ".";
+
+			// For each metaEdge, average each of the skeleton vertices that are not on the ends with the two skeleton vertices connected to it
+			metaEdgeIter mei = boost::edges(*this);
+			for (; mei.first != mei.second; ++mei) {
+				MetaE edge = *mei.first;
+				std::vector<SkelVert> vertices = operator[](edge).mVertices;
+				for (size_t i = 1; i < vertices.size() - 1; ++i) {
+					SkelVert prev = vertices[i - 1];
+					SkelVert curr = vertices[i];
+					SkelVert next = vertices[i + 1];
+					float averagedX = (currSkel.operator[](prev).x() + currSkel.operator[](curr).x() + currSkel.operator[](next).x()) / 3.0f;
+					float averagedY = (currSkel.operator[](prev).y() + currSkel.operator[](curr).y() + currSkel.operator[](next).y()) / 3.0f;
+					float averagedZ = (currSkel.operator[](prev).z() + currSkel.operator[](curr).z() + currSkel.operator[](next).z()) / 3.0f;
+					float averagedThickness = currSkel.operator[](curr).thickness();
+					float averagedWidth = currSkel.operator[](curr).width();
+					Point3d averaged = Point3d(averagedX, averagedY, averagedZ, averagedThickness, averagedWidth, currSkel.operator[](curr).id);
+					nextSkel.operator[](curr) = averaged;
+				}
+			}
+
+			// Average each junction node with all the skeleton vertices around it
+			metaVertIter mvi = boost::vertices(*this);
+			for (; mvi.first != mvi.second; ++mvi) {
+				MetaV vertex = *mvi.first;
+				if (boost::degree(vertex, *this) != 1) {
+					SkelVert curr = operator[](vertex).mSrcVert;
+					int outEdgeNumber = 1;
+					float xAccumulator = currSkel.operator[](curr).x();
+					float yAccumulator = currSkel.operator[](curr).y();
+					float zAccumulator = currSkel.operator[](curr).z();
+					typename graph_traits<BoostSkeleton>::out_edge_iterator ei, ei_end;
+					for (boost::tie(ei, ei_end) = out_edges(curr, currSkel); ei != ei_end; ++ei) {
+						SkelVert target = boost::target(*ei, currSkel);
+						xAccumulator += currSkel.operator[](target).x();
+						yAccumulator += currSkel.operator[](target).y();
+						zAccumulator += currSkel.operator[](target).z();
+						outEdgeNumber++;
+					}
+					float averagedX = xAccumulator / outEdgeNumber;
+					float averagedY = yAccumulator / outEdgeNumber;
+					float averagedZ = zAccumulator / outEdgeNumber;
+					float averagedThickness = currSkel.operator[](curr).thickness();
+					float averagedWidth = currSkel.operator[](curr).width();
+					Point3d averaged = Point3d(averagedX, averagedY, averagedZ, averagedThickness, averagedWidth, currSkel.operator[](curr).id);
+					nextSkel.operator[](curr) = averaged;
+				}
+			}
+
+			// Swap the buffer
+			currSkel = nextSkel;
+		}
+		return currSkel;
 	}
 
 	void BMetaGraph::traceBranch(MetaV parent, MetaV curr, std::deque<SkelVert> stem, std::set<MetaV> *visited, float windowSize, float cosineThreshold) {
@@ -3023,16 +3140,27 @@ namespace Roots
 
 				// Qualifier 1: Since the part of skeleton within the stem boundary can be very messy and rugged,
 				// we don't consider the angles when it's still within the stem boundary
-				bool currIsWithinStemBoundary = !vertexIsOutOfRadiusRange(operator[](target).mSrcVert, stem, 1.0f);
+				bool currIsWithinStemBoundary = !vertexIsOutOfRadiusRange(operator[](target).mSrcVert, stem, 1.5f);
 
 				// Qualifier 2: However, there are some branches that are obviously noises no matter where they are.
 				// Those are the ones that are short and with a target node being an endpoint.
 				// Now we define short as having a length smaller than 2 * windowSize.
 				bool isNoise = boost::degree(target, *this) == 1 && operator[](boost::edge(curr, target, *this).first).mLength < 2.0f * windowSize;
 
+				// Qualifier 3: If the next edge is very long. Even if it has a weird angle at the junction, we still include it
+				bool isLongEdge = operator[](boost::edge(curr, target, *this).first).mLength > 3.0f * windowSize;
+
+				//if (curr == 891) {
+				//	std::cout << "currTailVector: " << vx1 << " " << vy1 << " " << vz1 << std::endl;
+				//	std::cout << "nextHeadVector: " << vx2 << " " << vy2 << " " << vz2 << std::endl;
+				//	std::cout << "currEdgeLength: " << operator[](boost::edge(parent, curr, *this).first).mLength;
+				//	std::cout << "nextEdgeLength: " << operator[](boost::edge(curr, target, *this).first).mLength;
+				//	std::cout << "cosine: " << cosine << std::endl;
+				//}
+
 				// Taking the angle and two qualifiers into account, we decide whether the edge is a valid next edge
 				// for the branch we are currently tracing, and recursively trace along the edge we just added.
-				if ((cosine > cosineThreshold || currIsWithinStemBoundary) && !isNoise) {
+				if ((cosine > cosineThreshold || currIsWithinStemBoundary || isLongEdge) && !isNoise) {
 					primary_branches.push_back(boost::edge(curr, target, *this).first);
 					traceBranch(curr, target, stem, visited, windowSize, cosineThreshold);
 				}

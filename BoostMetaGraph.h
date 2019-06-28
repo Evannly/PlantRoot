@@ -588,6 +588,8 @@ namespace Roots{
 		Parameters:
 		out - ostream to push this skelton into
 		*/
+
+		void saveFairedSkeleton(std::string filename);
 		void writeToStream(std::ostream &out);
 
 		/*
@@ -758,6 +760,7 @@ namespace Roots{
 		bool vertexIsOutOfRadiusRange(SkelVert src, std::deque<SkelVert> stem, float timesThickness);
 		bool branchLongerThanThreshold(MetaV prev, MetaV self, float threshold);
 		bool branchExceedsStemBoundary(std::set<MetaV> *visited, std::deque<SkelVert> stem, MetaV prev, MetaV self, float threshold);
+		BSkeleton fairSkeleton(BSkeleton skel, int iterationRound);
 		void traceBranch(MetaV parent, MetaV curr, std::deque<SkelVert> stem, std::set<MetaV> *visited, float windowSize, float cosineThreshold);
 		std::tuple<float, float, float> getDirectionVector(MetaV source, MetaV target, float windowSize, std::string headOrTail);
 		std::vector<float> neighbourhoodPoints(std::vector<float> positions, float x_centroid, float distance = 5);

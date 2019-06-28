@@ -645,7 +645,7 @@ namespace Roots
 				MetaV u_tmp = boost::source(*riter, *this);
 				MetaV v_tmp = boost::target(*riter, *this);
 				MetaE e_tmp = boost::edge(u_tmp, v_tmp, *this).first;
-				colorEdge(e_tmp, RED);
+				colorEdge(e_tmp, WHITE);
 			}
 		}
 
