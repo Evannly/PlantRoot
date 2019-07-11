@@ -919,6 +919,8 @@ namespace Roots
 		autoStemVBO = {};
 		testVBO = {};
 
+		traceBranchVBO = {};
+
 		for (int i = 0; i < 3; ++i)
 		{
 			selectionColor[i] = 0.0;
@@ -2873,7 +2875,7 @@ namespace Roots
 							if (branchExceedsStemBoundary(&visited, sequence, auto_stem_metaNode[i], target, 2.0f)) {
 								std::cout << " that exceeds the stem boundary";
 								validBranchesOnNode++;
-								primary_branches.push_back(*ei);
+								//primary_branches.push_back(*ei);
 
 								// Trace branches
 								std::set<MetaV> visitedWhenTracingBranch;
@@ -2887,12 +2889,34 @@ namespace Roots
 					}
 				}
 
+				if (validBranchesOnNode > 0) {
+					// Find the branching points
+					std::set<MetaV> visitedWhenFindingBranchingPoints;
+					SkelVert source = operator[](auto_stem_metaNode[i]).mSrcVert;
+					findBranchingPointsWithParent(source, source, sequence, &visitedWhenFindingBranchingPoints, 1.2f);
+				}
+
 				// Put the position values into the input vector, each repeating j times 
 				// with j being the number of valid branches on the node
 				for (int j = 0; j < validBranchesOnNode; ++j) {
 					cluster_input_position.push_back(auto_stem_metaDist[i]);
 					cluster_input.push_back(auto_stem_metaNode[i]);
 				}
+			}
+
+			for (std::map<SkelVert, SkelVert>::iterator it = allBranchingPointsWithParent.begin(); it != allBranchingPointsWithParent.end(); ++it) {
+				std::cout << it->first << std::endl;
+			}
+
+			// Trace branches from branching points
+			for (std::map<SkelVert, SkelVert>::iterator it = allBranchingPointsWithParent.begin(); it != allBranchingPointsWithParent.end(); ++it) {
+				std::set<SkelVert> visitedWhenTracingBranchesUsingLongestPath;
+				SkelVert parent = it->second;
+				SkelVert branchingPoint = it->first;
+				visitedWhenTracingBranchesUsingLongestPath.insert(parent);
+				std::map<SkelVert, SkelVert> childToParentMap;
+				std::map<SkelVert, float> pathLength;
+				traceBranchUsingLongestPath(branchingPoint, sequence, &visitedWhenTracingBranchesUsingLongestPath, 150.0f, 50.0f, 0.6f, 5);
 			}
 		}
 
@@ -3102,15 +3126,154 @@ namespace Roots
 		return currSkel;
 	}
 
+	void BMetaGraph::traceBranchUsingLongestPath(SkelVert branchingPoint, std::deque<SkelVert> stem, std::set<SkelVert> *visited, float searchDistance, float minimumBranchLength, float radiusRangeCoeff, int scoringWindowSize) {
+		std::deque<std::pair<SkelVert, float>> bfsQueue;
+		std::set<SkelVert> stemVertSet;
+		std::set<SkelVert> pathEnds;
+		std::map<SkelVert, SkelVert> childToParentMap;
+		std::map<SkelVert, float> pathLength;
+		for (SkelVert sv : stem) {
+			stemVertSet.insert(sv);
+		}
+		bfsQueue.push_back(std::make_pair(branchingPoint, searchDistance));
+		visited->insert(branchingPoint);
+		childToParentMap.insert({ branchingPoint, branchingPoint });
+		pathLength.insert({ branchingPoint, 0.0f });
+		while (bfsQueue.size() != 0) {
+			SkelVert source = bfsQueue.front().first;
+			float distanceLeft = bfsQueue.front().second;
+			bfsQueue.pop_front();
+			if (distanceLeft < 0.0f || boost::degree(source, mSkeleton) == 1) {
+				pathEnds.insert(source);
+				continue;
+			}
+			typename graph_traits<BSkeleton>::out_edge_iterator ei, ei_end;
+			for (boost::tie(ei, ei_end) = out_edges(source, mSkeleton); ei != ei_end; ++ei) {
+				SkelVert target = boost::target(*ei, mSkeleton);
+				if (std::find(visited->begin(), visited->end(), target) == visited->end() 
+					&& vertexIsOutOfRadiusRange(target, stem, radiusRangeCoeff)) {
+					visited->insert(target);
+					childToParentMap.insert({ target, source });
+					SkelEdge edge = boost::edge(source, target, mSkeleton).first;
+					float edgeLength = (&mSkeleton)->operator[](edge).euclidLength;
+					pathLength.insert({ target, pathLength.at(source) + edgeLength });
+					bfsQueue.push_back(std::make_pair(target, distanceLeft - edgeLength));
+				}
+			}
+		}
+		float maxPathLength = FLT_MIN;
+		for (SkelVert pathEnd : pathEnds) {
+			std::cout << "    pathEnd: " << pathEnd << " pathLength: " << pathLength.at(pathEnd) << std::endl;
+			if (pathLength.at(pathEnd) > maxPathLength) {
+				maxPathLength = pathLength.at(pathEnd);
+			}
+		}
+		std::cout << "branchingPoint: " << branchingPoint << " maxPathLength: " << maxPathLength << std::endl;
+		if (maxPathLength < minimumBranchLength) {
+			return;
+		}
+		float percentLongestThreshold = 0.9 * maxPathLength;
+		SkelVert bestPathBuffer = INT64_MAX;
+		float scoreBuffer = FLT_MAX;
+		for (SkelVert pathEnd : pathEnds) {
+			if (pathLength.at(pathEnd) < percentLongestThreshold) {
+				continue;
+			}
+			std::vector<SkelVert> path;
+			SkelVert predecessor = childToParentMap.at(pathEnd);
+			SkelVert self = pathEnd;
+			path.push_back(pathEnd);
+			while (predecessor != self) {
+				path.push_back(predecessor);
+				self = predecessor;
+				predecessor = childToParentMap.at(predecessor);
+			}
+			if (path.size() < 3 + scoringWindowSize) {
+				continue;
+			}
+			float scoreAccumulator = 0.0f;
+			int count = path.size() - (3 + scoringWindowSize) + 1;
+			for (size_t i = 0; i < count; ++i) {
+				Point3d p0 = (&mSkeleton)->operator[](path[i]);
+				Point3d p1 = (&mSkeleton)->operator[](path[i + 1]);
+				Point3d p2 = (&mSkeleton)->operator[](path[i + 2]);
+				Point3d p0_n = (&mSkeleton)->operator[](path[i + scoringWindowSize]);
+				Point3d p1_n = (&mSkeleton)->operator[](path[i + 1 + scoringWindowSize]);
+				Point3d p2_n = (&mSkeleton)->operator[](path[i + 2 + scoringWindowSize]);
+				float firstDeriv_0_x = p0_n.x() - p0.x();
+				float firstDeriv_0_y = p0_n.y() - p0.y();
+				float firstDeriv_0_z = p0_n.z() - p0.z();
+				float firstDeriv_1_x = p1_n.x() - p1.x();
+				float firstDeriv_1_y = p1_n.y() - p1.y();
+				float firstDeriv_1_z = p1_n.z() - p1.z();
+				float firstDeriv_2_x = p2_n.x() - p2.x();
+				float firstDeriv_2_y = p2_n.y() - p2.y();
+				float firstDeriv_2_z = p2_n.z() - p2.z();
+				float secondDeriv_01_x = firstDeriv_1_x - firstDeriv_0_x;
+				float secondDeriv_01_y = firstDeriv_1_y - firstDeriv_0_y;
+				float secondDeriv_01_z = firstDeriv_1_z - firstDeriv_0_z;
+				float secondDeriv_12_x = firstDeriv_2_x - firstDeriv_1_x;
+				float secondDeriv_12_y = firstDeriv_2_y - firstDeriv_1_y;
+				float secondDeriv_12_z = firstDeriv_2_z - firstDeriv_1_z;
+				float thirdDeriv_012_x = secondDeriv_12_x - secondDeriv_01_x;
+				float thirdDeriv_012_y = secondDeriv_12_y - secondDeriv_01_y;
+				float thirdDeriv_012_z = secondDeriv_12_z - secondDeriv_01_z;
+				float thirdDerivMerged = std::sqrt(thirdDeriv_012_x * thirdDeriv_012_x + thirdDeriv_012_y * thirdDeriv_012_y + thirdDeriv_012_z * thirdDeriv_012_z);
+				scoreAccumulator += thirdDerivMerged;
+			}
+			float score = scoreAccumulator / count;
+			if (score < scoreBuffer) {
+				scoreBuffer = score;
+				bestPathBuffer = pathEnd;
+			}
+		}
+		std::cout << "branchingPoint: " << branchingPoint << " bestPath: " << bestPathBuffer << std::endl;
+		if (bestPathBuffer == INT64_MAX) {
+			return;
+		}
+		allValidBranchingPoints.insert(branchingPoint);
+		std::vector<SkelVert> bestPath;
+		SkelVert predecessor = childToParentMap.at(bestPathBuffer);
+		SkelVert self = bestPathBuffer;
+		bestPath.push_back(bestPathBuffer);
+		while (predecessor != self) {
+			bestPath.push_back(predecessor);
+			self = predecessor;
+			predecessor = childToParentMap.at(predecessor);
+		}
+		for (size_t i = 1; i < bestPath.size() - 1; ++i) {
+			traceBranchVBO.push_back(bestPath[i - 1]);
+			traceBranchVBO.push_back(bestPath[i]);
+		}
+	}
+
+	void BMetaGraph::findBranchingPointsWithParent(SkelVert parent, SkelVert curr, std::deque<SkelVert> stem, std::set<SkelVert> *visited, float radiusRangeCoeff) {
+		if (visited->count(curr) || (std::find(stem.begin(), stem.end(), curr) != stem.end() && parent != curr)) {
+			return;
+		}
+		if (vertexIsOutOfRadiusRange(curr, stem, radiusRangeCoeff)) {
+			allBranchingPointsWithParent.insert({ curr, parent });
+			return;
+		}
+		visited->insert(curr);
+		typename graph_traits<BSkeleton>::out_edge_iterator ei, ei_end;
+		for (boost::tie(ei, ei_end) = out_edges(curr, mSkeleton); ei != ei_end; ++ei) {
+			MetaV target = boost::target(*ei, mSkeleton);
+			if (target != parent) {
+				findBranchingPointsWithParent(curr, target, stem, visited, radiusRangeCoeff);
+			}
+		}
+	}
+
 	void BMetaGraph::traceBranch(MetaV parent, MetaV curr, std::deque<SkelVert> stem, std::set<MetaV> *visited, float windowSize, float cosineThreshold) {
 
 		// Stop tracing if the current node is already visited
-		if ((*visited).count(curr)) {
+		if (visited->count(curr)) {
 			return;
 		}
 
 		// Mark the current node as visited
-		(*visited).insert(curr);
+		visited->insert(curr);
 
 		// Param: currTailVector: the direction vector at the end of the current edge, with the end being
 		//						  the target of the edge and the start being the skeleton node that is one
@@ -3140,7 +3303,7 @@ namespace Roots
 
 				// Qualifier 1: Since the part of skeleton within the stem boundary can be very messy and rugged,
 				// we don't consider the angles when it's still within the stem boundary
-				bool currIsWithinStemBoundary = !vertexIsOutOfRadiusRange(operator[](target).mSrcVert, stem, 1.5f);
+				bool currIsWithinStemBoundary = !vertexIsOutOfRadiusRange(operator[](target).mSrcVert, stem, 1.2f);
 
 				// Qualifier 2: However, there are some branches that are obviously noises no matter where they are.
 				// Those are the ones that are short and with a target node being an endpoint.
@@ -3150,18 +3313,12 @@ namespace Roots
 				// Qualifier 3: If the next edge is very long. Even if it has a weird angle at the junction, we still include it
 				bool isLongEdge = operator[](boost::edge(curr, target, *this).first).mLength > 3.0f * windowSize;
 
-				//if (curr == 891) {
-				//	std::cout << "currTailVector: " << vx1 << " " << vy1 << " " << vz1 << std::endl;
-				//	std::cout << "nextHeadVector: " << vx2 << " " << vy2 << " " << vz2 << std::endl;
-				//	std::cout << "currEdgeLength: " << operator[](boost::edge(parent, curr, *this).first).mLength;
-				//	std::cout << "nextEdgeLength: " << operator[](boost::edge(curr, target, *this).first).mLength;
-				//	std::cout << "cosine: " << cosine << std::endl;
-				//}
-
 				// Taking the angle and two qualifiers into account, we decide whether the edge is a valid next edge
 				// for the branch we are currently tracing, and recursively trace along the edge we just added.
 				if ((cosine > cosineThreshold || currIsWithinStemBoundary || isLongEdge) && !isNoise) {
-					primary_branches.push_back(boost::edge(curr, target, *this).first);
+					if (!currIsWithinStemBoundary) {
+						primary_branches.push_back(boost::edge(curr, target, *this).first);
+					}
 					traceBranch(curr, target, stem, visited, windowSize, cosineThreshold);
 				}
 			}

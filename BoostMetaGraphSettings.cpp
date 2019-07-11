@@ -390,6 +390,13 @@ namespace Roots
 		buildEdgeVBOs();
 	}
 
+	void BMetaGraph::setDisplayTracingTree(bool doShow)
+	{
+		showTracedBranches = doShow;
+		std::cout << "showTracingTrees: " << doShow << std::endl;
+		buildEdgeVBOs();
+	}
+
 	void BMetaGraph::setCurrentPrimaryNode(int node)
 	{
 		std::cout << "CurrentPrimaryNode " << CurrentPrimaryNode << std::endl;
@@ -663,13 +670,28 @@ namespace Roots
 		if (autoStemVBO.size() > 0 && showSuggestedStem)
 		{
 			glDisable(GL_DEPTH_TEST);
-			
-			std::vector<float> testColor(mSkeleton.glVertices.size(),1);
-			
+
+			std::vector<float> testColor(mSkeleton.glVertices.size(), 1);
+
 			glVertexPointer(3, GL_FLOAT, 0, &mSkeleton.glVertices[0]);
 			glColorPointer(3, GL_FLOAT, 0, testColor.data());
-			
+
 			glDrawElements(GL_LINES, autoStemVBO.size(), GL_UNSIGNED_INT, &autoStemVBO[0]);
+
+			glEnable(GL_DEPTH_TEST);
+		}
+
+		if (traceBranchVBO.size() > 0 && showTracedBranches)
+		{
+			glDisable(GL_DEPTH_TEST);
+
+			std::vector<float> testColor(mSkeleton.glVertices.size(), 1);
+
+			glVertexPointer(3, GL_FLOAT, 0, &mSkeleton.glVertices[0]);
+			glColorPointer(3, GL_FLOAT, 0, testColor.data());
+
+			glLineWidth(edgeOptions.scale);
+			glDrawElements(GL_LINES, traceBranchVBO.size(), GL_UNSIGNED_INT, &traceBranchVBO[0]);
 
 			glEnable(GL_DEPTH_TEST);
 		}
@@ -759,6 +781,19 @@ namespace Roots
 		metaVertIter mvi = boost::vertices(*this);
 		
 		GLfloat *nodeColor;
+
+		if (showTracedBranches) {
+			if (nodeOptions.showEndpoints) {
+				for (SkelVert sv : allValidBranchingPoints) {
+					float x = (&mSkeleton)->operator[](sv).x();
+					float y = (&mSkeleton)->operator[](sv).y();
+					float z = (&mSkeleton)->operator[](sv).z();
+					drawSphere.fancierDraw(RED, x, y, z, nodeOptions.endpointScale);
+				}
+			}
+			return;
+		}
+
 		for (; mvi.first != mvi.second; ++mvi)
 		{
 			BMetaNode *node = &operator[](*mvi.first);

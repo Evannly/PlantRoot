@@ -274,6 +274,8 @@ namespace Roots{
 		std::vector<GLuint> stemVBO;
 
 		std::vector<GLuint> autoStemVBO;
+		
+		std::vector<GLuint> traceBranchVBO;
 
 		std::vector<GLuint> testVBO; // use for debug
 		GLfloat selectionColor[4];
@@ -313,11 +315,15 @@ namespace Roots{
 
 		bool showSuggestedStem;
 		bool showStem;
+		bool showTracedBranches;
 		bool tracePrimaryBranches;
 		std::vector<MetaE> StemPath;
 		std::vector<MetaV> StemPath_node;
 		std::vector<SkelEdge> auto_stem;
 		std::vector<MetaE> primary_branches;
+		std::vector<std::tuple<MetaV, SkelVert, std::vector<SkelEdge>>> branches;
+		std::map<SkelVert, SkelVert> allBranchingPointsWithParent;
+		std::set<SkelVert> allValidBranchingPoints;
 		
 		MetaV selectStemStart, selectStemEnd;
 		bool selectStemStartValid, selectStemEndValid;
@@ -463,6 +469,7 @@ namespace Roots{
 		void setDisplaySuggestedNode(bool doShow);
 		void setDisplayClusterInput(bool doShow);
 		void setDisplayTracingPrimaryBranches(bool doTrace);
+		void setDisplayTracingTree(bool doShow);
 		void setCurrentPrimaryNode(int layer);
 		void setDisplayConfirmedPrimaryBranches(bool doShowConfirmedBranches);
 		void setRandomColorizePrimaryNodes(bool doShow);
@@ -761,6 +768,8 @@ namespace Roots{
 		bool branchLongerThanThreshold(MetaV prev, MetaV self, float threshold);
 		bool branchExceedsStemBoundary(std::set<MetaV> *visited, std::deque<SkelVert> stem, MetaV prev, MetaV self, float threshold);
 		BSkeleton fairSkeleton(BSkeleton skel, int iterationRound);
+		void traceBranchUsingLongestPath(SkelVert branchingPoint, std::deque<SkelVert> stem, std::set<SkelVert> *visited, float searchDistance, float minimumBranchLength, float radiusRangeCoeff, int scoringWindowSize);
+		void findBranchingPointsWithParent(SkelVert parent, SkelVert curr, std::deque<SkelVert> stem, std::set<SkelVert> *visited, float radiusRangeCoeff);
 		void traceBranch(MetaV parent, MetaV curr, std::deque<SkelVert> stem, std::set<MetaV> *visited, float windowSize, float cosineThreshold);
 		std::tuple<float, float, float> getDirectionVector(MetaV source, MetaV target, float windowSize, std::string headOrTail);
 		std::vector<float> neighbourhoodPoints(std::vector<float> positions, float x_centroid, float distance = 5);
