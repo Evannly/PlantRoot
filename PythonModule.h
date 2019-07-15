@@ -6,12 +6,13 @@
 #include "BoostMetaGraph.h"
 #include "IssuesGL.h"
 #include "Sphere.h"
-
+#include "Sorghum.h"
 using namespace boost::python;
 using namespace drawing;
 using namespace Roots;
 BOOST_PYTHON_MODULE(RootsTool)
 {
+
 
 
 	class_<Point3d>("Point3d")
@@ -35,8 +36,6 @@ BOOST_PYTHON_MODULE(RootsTool)
 		.def_readwrite("radius", &BSkeleton::mRadius)
 		;
 
-
-
 	class_<IssuesGL>("IssuesGL")
 		.def("issuegl", &IssuesGL::issueGL)
 		;
@@ -48,6 +47,9 @@ BOOST_PYTHON_MODULE(RootsTool)
 		;
 
 	class_<BMetaGraph>("mgraph")
+		.def("setDisplayBranch",&BMetaGraph::setDisplayBranch)
+		.def("sorghumBranchOperation",&BMetaGraph::sorghumBranchOperation)
+		.def("setSorghumBranchParameters", &BMetaGraph::setSorghumBranchParameters)
 		.def("loadFromFile", &BMetaGraph::loadFromFile)
 		.def("loadMeshFromFile", &BMetaGraph::loadMeshFromFile)
 		.def("saveToFile", &BMetaGraph::saveToFile)
@@ -69,6 +71,8 @@ BOOST_PYTHON_MODULE(RootsTool)
 		.def("assignEdgeHeatmap", &BMetaGraph::assignEdgeHeatMap)
 		.def("showEdges", &BMetaGraph::showEdges)
 		.def("setEdgeScale", &BMetaGraph::setEdgeScale)
+		.def("setStemScale",&BMetaGraph::setStemScale)
+		.def("setBranchScale",&BMetaGraph::setBranchScale)
 		.def("magnifyNonBridges", &BMetaGraph::magnifyNonBridges)
 		.def("showOnlyNonBridges", &BMetaGraph::showOnlyNonBridges)
 		.def("colorizeEdgesByThickness", &BMetaGraph::colorizeEdgesByThickness)
