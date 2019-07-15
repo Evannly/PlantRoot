@@ -48,7 +48,6 @@ namespace Roots
 		}
 		else if (boost::iequals(line, beginPlyString))
 		{
-			std::cout << "loadDanPly" << std::endl;
 			result = loadDanPly(lines, startingLine);
 		}
 		else
@@ -163,6 +162,7 @@ namespace Roots
 				while (boost::iequals(words[0], "property"))
 				{
 					boost::split(words, lines[lineOn], boost::is_any_of(" "));
+					
 					if (!boost::iequals(words[0], "property"))
 					{
 						break;
@@ -171,30 +171,24 @@ namespace Roots
 					{
 						mVertexParseOrder[ParsingOrder::Thickness] = propertyPos;
 						mVertexWriteOrder[propertyPos] = ParsingOrder::Thickness;
-						//std::cout << "bt2, mVertexParseOrder[ParsingOrder::Thickness] is " << propertyPos << std::endl;
 					}
 					else if (boost::iequals(words[2], "radius"))
 					{
 						mVertexParseOrder[ParsingOrder::Width] = propertyPos;
 						mVertexWriteOrder[propertyPos] = ParsingOrder::Width;
-						//std::cout << "radius, mVertexParseOrder[ParsingOrder::Width] is " << propertyPos << std::endl;
 					}
 					else if (boost::iequals(words[2], "x"))
 					{
-						
 						mVertexParseOrder[ParsingOrder::X] = propertyPos;
 						mVertexWriteOrder[propertyPos] = ParsingOrder::X;
-						//std::cout << "x, mVertexParseOrder[ParsingOrder::X] is " << propertyPos << std::endl;
 					}
 					else if (boost::iequals(words[2], "y"))
 					{
-						//std::cout << "y, mVertexParseOrder[ParsingOrder::Y] is " << propertyPos << std::endl;
 						mVertexParseOrder[ParsingOrder::Y] = propertyPos;
 						mVertexWriteOrder[propertyPos] = ParsingOrder::Y;
 					}
 					else if (boost::iequals(words[2], "z"))
 					{
-						//std::cout << "z, mVertexParseOrder[ParsingOrder::Z] is " << propertyPos << std::endl;
 						mVertexParseOrder[ParsingOrder::Z] = propertyPos;
 						mVertexWriteOrder[propertyPos] = ParsingOrder::Z;
 					}
@@ -315,11 +309,9 @@ namespace Roots
 			boost::split(words, lines[lineOn], boost::is_any_of(" "));
 			for (int parsingOrder = 0; parsingOrder < ParsingOrder::ParsingCount; ++parsingOrder)
 			{
-				
 				vertData[parsingOrder] = boost::lexical_cast<float>(words[mVertexParseOrder[(ParsingOrder)parsingOrder]]);
 			}
 			addVertex(Point3d(vertData[0], vertData[1], vertData[2], vertData[3], vertData[4]));
-			
 		}
 		updateGLVertices();
 	}
@@ -443,6 +435,31 @@ namespace Roots
 		}
 	}
 
+	//SkelEdge BSkeleton::addEdge(int v0, int v1)
+	//{
+	//	SkelEdge e;
+	//	bool edgeAdded;
+	//	boost::tie(e, edgeAdded) = boost::add_edge(v0, v1, *this);
+	//	if (edgeAdded)
+	//	{
+	//		RootAttributes ra = RootAttributes();
+	//		ra.euclidLength = (operator[](v0) - operator[](v1)).mag();
+	//		ra.v0id = v0;
+	//		ra.v1id = v1;
+	//		operator[](e) = ra;
+	//		
+	//	}
+	//	return e;
+	//}
+	//SkelVert BSkeleton::addVertex(Point3d pointLocation)
+	//{
+	//	SkelVert v;
+	//	v = boost::add_vertex(*this);
+	//	operator[](v) = pointLocation;
+	//	operator[](v).id = v;
+	//	mBoundsFound = false;
+	//	return v;
+	//}
 
 	void BSkeleton::updateGLVertices()
 	{

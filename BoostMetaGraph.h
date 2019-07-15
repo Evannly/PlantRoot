@@ -9,7 +9,7 @@
 #include <map>
 #include "Sphere.h"
 #include "Mesh.h"
-#include "Sorghum.h"
+
 
 typedef GLuint GLLineIndex;
 typedef GLuint GLVertexIndex;
@@ -74,8 +74,7 @@ namespace Roots
 		float scale;
 		bool magnifyNonBridges;
 		bool showOnlyNonBridges;
-		float stemScale;
-		float branchScale;
+
 		//scale of 0-1 between min and max for whatever attribute is being colorized
 		//lower/higher values are flooded
 		float minColorCutoff, maxColorCutoff;
@@ -152,7 +151,7 @@ namespace Roots
 		bool isSelected;
 		int instanceId;
 		static int instanceCounter;
-		float curvature;
+
 		int connectedComponent;
 
 		int connectedPrimaryNode;
@@ -229,9 +228,8 @@ namespace Roots{
 	{
 		/*vvvvvvvvvvvvvvvvvvvvv MEMBER VARIABLES vvvvvvvvvvvvvvvvvvvvv*/
 		//the skeleton from which this metagraph is constructed
-		Sorghum sorghum;
 		BSkeleton mSkeleton;
-		
+
 		//map between skeleton vertices and their corresponding metanodes
 		std::map<SkelVert, MetaV> vertNodeMap;
 
@@ -261,7 +259,6 @@ namespace Roots{
 
 		//graphics objects and values
 		std::vector<std::vector<GLfloat>> vertexColors;
-		std::vector<GLfloat> stemColors;
 		std::vector<GLuint> bridgeVBO;
 		std::vector<GLuint> nonBridgeVBO;
 		std::vector<GLuint> selectionVBO;
@@ -271,7 +268,7 @@ namespace Roots{
 		std::vector<GLuint> stemVBO;
 
 		std::vector<GLuint> autoStemVBO;
-		std::vector<GLuint> sorghumBranchVBO;
+
 		std::vector<GLuint> testVBO; // use for debug
 		GLfloat selectionColor[4];
 		float eyeShiftX, eyeShiftY;
@@ -310,12 +307,10 @@ namespace Roots{
 
 		bool showSuggestedStem;
 		bool showStem;
-		bool showBranch;
-		bool showTest = false;
 		std::vector<MetaE> StemPath;
 		std::vector<MetaV> StemPath_node;
 		std::vector<SkelEdge> auto_stem;
-
+		
 		MetaV selectStemStart, selectStemEnd;
 		bool selectStemStartValid, selectStemEndValid;
 		bool stemSelected;
@@ -418,8 +413,6 @@ namespace Roots{
 		void assignEdgeHeatMap(boost::python::list heatmap);
 		void showEdges(bool doShow);
 		void setEdgeScale(float scale);
-		void setStemScale(float scale);
-		void setBranchScale(float scale);
 		void magnifyNonBridges(bool doMagnify);
 		void showOnlyNonBridges(bool showOnly);
 		void colorizeEdgesByThickness();
@@ -454,7 +447,6 @@ namespace Roots{
 		void setShowBoundingBoxes(bool doShow);
 
 		void setDisplayStem(bool doShowStem);
-		void setDisplayBranch(bool doShowBranch);
 		void setDisplaySuggestedStem(bool doShow);
 		void setDisplayPrimaryNodes(bool doShowPriamryStem);
 		void setDisplaySuggestedNode(bool doShow);
@@ -504,7 +496,7 @@ namespace Roots{
 
 		bool pickNewViewCenter(int mouseX, int mouseY);
 		void changeRotationSpeed(bool increase);
-		void runSorghumAlgorithm();
+
 
 
 	private:
@@ -597,7 +589,7 @@ namespace Roots{
 
 
 		int loadFromLines_Binary(FILE *fp);
-		//void loadFromFile_Binary(std::string filename);
+		void loadFromFile_Binary(std::string filename);
 
 		int loadSkeletonFromLines_Binary(FILE *fp);
 
@@ -674,7 +666,7 @@ namespace Roots{
 		component map sorted by their size (eg. component 0 is the largest component)
 		*/
 		void findAndLabelConnectedComponents();
-		void setSorghumBranchParameters(int minBranchSize, int maxBranchSize, float radiusTolerance, float tipAngleThresh, float tortuosityThresh);
+
 		/*
 		Iterates over all vertices, and on each vertex belonging to one of the provided components,
 		stores their mapped component id as the lower id between the two components 
@@ -749,7 +741,6 @@ namespace Roots{
 		within the MST
 		*/
 		void FindStemOperation(float lowThreshold);
-		void sorghumBranchOperation();
 		float getEdgeEuclidLength(SkelEdge srcId, BSkeleton *skel);
 		float getVertThickness(SkelVert srcId, BSkeleton *skel);
 		float getVertWidth(SkelVert srcId, BSkeleton *skel);
