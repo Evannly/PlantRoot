@@ -324,6 +324,8 @@ namespace Roots{
 		std::vector<std::tuple<MetaV, SkelVert, std::vector<SkelEdge>>> branches;
 		std::map<SkelVert, SkelVert> allBranchingPointsWithParent;
 		std::set<SkelVert> allValidBranchingPoints;
+		std::map<SkelVert, std::pair<MetaV, float>> branchingPointToStemNodeWithDistanceMap;
+
 		
 		MetaV selectStemStart, selectStemEnd;
 		bool selectStemStartValid, selectStemEndValid;
@@ -768,8 +770,8 @@ namespace Roots{
 		bool branchLongerThanThreshold(MetaV prev, MetaV self, float threshold);
 		bool branchExceedsStemBoundary(std::set<MetaV> *visited, std::deque<SkelVert> stem, MetaV prev, MetaV self, float threshold);
 		BSkeleton fairSkeleton(BSkeleton skel, int iterationRound);
-		void traceBranchUsingLongestPath(SkelVert branchingPoint, std::deque<SkelVert> stem, std::set<SkelVert> *visited, float searchDistance, float minimumBranchLength, float radiusRangeCoeff, int scoringWindowSize);
-		void findBranchingPointsWithParent(SkelVert parent, SkelVert curr, std::deque<SkelVert> stem, std::set<SkelVert> *visited, float radiusRangeCoeff);
+		void traceBranchUsingLongestPath(SkelVert branchingPoint, std::deque<SkelVert> stem, std::set<SkelVert> *pathTaken, std::set<SkelVert> visited, float searchDistance, float minimumBranchLength, float radiusRangeCoeff, int scoringWindowSize);
+		void findBranchingPointsWithParent(MetaV stemNode, std::deque<SkelVert> stem, float radiusRangeCoeff);
 		void traceBranch(MetaV parent, MetaV curr, std::deque<SkelVert> stem, std::set<MetaV> *visited, float windowSize, float cosineThreshold);
 		std::tuple<float, float, float> getDirectionVector(MetaV source, MetaV target, float windowSize, std::string headOrTail);
 		std::vector<float> neighbourhoodPoints(std::vector<float> positions, float x_centroid, float distance = 5);

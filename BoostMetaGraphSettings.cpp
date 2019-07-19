@@ -399,7 +399,7 @@ namespace Roots
 
 	void BMetaGraph::setCurrentPrimaryNode(int node)
 	{
-		std::cout << "CurrentPrimaryNode " << CurrentPrimaryNode << std::endl;
+		//std::cout << "CurrentPrimaryNode " << CurrentPrimaryNode << std::endl;
 		if (CurrentPrimaryNode != node)
 		{
 			CurrentPrimaryNode = node;

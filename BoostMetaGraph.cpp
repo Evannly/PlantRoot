@@ -1176,7 +1176,7 @@ namespace Roots
 			std::cout << "Error: No skeleton found." << std::endl;
 			return;
 		}
-		BSkeleton fairedSkeleton = fairSkeleton(mSkeleton, 50);
+		BSkeleton fairedSkeleton = fairSkeleton(mSkeleton, 10);
 		std::cout << std::endl;
 		std::ofstream filestream;
 		filestream.open(filename);
@@ -2373,15 +2373,256 @@ namespace Roots
 
 	void BMetaGraph::FindStemOperation(float lowThreshold)
 	{
+		//std::cout << "low threshold " << lowThreshold << std::endl;
+		//autoStemVBO.clear();
+
+		//// find highest radius
+		//float maxWidth = 0.0, maxThickness = 0.0;
+		//skelVertIter svi = boost::vertices(mSkeleton);
+		//SkelVert vertMaxWidth;
+
+		//for (; svi.first != svi.second; ++svi)
+		//{
+		//	SkelVert vert = *svi.first;
+		//	if (getVertWidth(vert, &mSkeleton) > maxWidth)
+		//	{
+		//		vertMaxWidth = vert;
+		//		maxWidth = getVertWidth(vert, &mSkeleton);
+		//	}
+		//}
+		//std::cout << "vertMaxWidth " << vertMaxWidth << " max width " << maxWidth << std::endl;
+
+		//// BFS to find all vertices whose thickness >= lowThreshold
+		//std::set<SkelVert> visitedMap;
+		//visitedMap.insert(vertMaxWidth);
+		//std::set<SkelVert> selectedNodes;
+		//selectedNodes.insert(vertMaxWidth);
+		//std::deque<SkelVert> queVert;
+		//queVert.push_back(vertMaxWidth);
+		//std::vector<SkelEdge> selectedEdges;
+
+		//while (!queVert.empty())
+		//{
+		//	SkelVert root = queVert.front();
+		//	queVert.pop_front();
+		//	BSkeleton::adjacency_iterator adjIt, adjEnd;
+		//	for (boost::tie(adjIt, adjEnd) = boost::adjacent_vertices(root, mSkeleton); adjIt != adjEnd; ++adjIt)
+		//	{
+		//		SkelVert child = *adjIt;
+		//		if (getVertWidth(child, &mSkeleton) >= lowThreshold && visitedMap.find(child) == visitedMap.end())
+		//		{
+		//			visitedMap.insert(child);
+		//			selectedNodes.insert(child);
+		//			queVert.push_back(child);
+		//		}
+		//	}
+		//}
+
+		//for (skelEdgeIter sei = boost::edges(mSkeleton); sei.first != sei.second; ++sei) {
+		//	skelEIter e = sei.first;
+		//	if (selectedNodes.find(e->m_source) != selectedNodes.end() && selectedNodes.find(e->m_target) != selectedNodes.end()) { 
+		//		selectedEdges.push_back(*e);
+		//	}
+		//}
+
+		//std::sort(selectedEdges.begin(), selectedEdges.end(),
+		//	[&](const SkelEdge& e1, const SkelEdge& e2) {
+		//	return getEdgeEuclidLength(e1, &mSkeleton) < getEdgeEuclidLength(e2, &mSkeleton);
+		//});
+		//std::cout << "Sorted " << std::endl;
+		//std::cout << "Size of selectedEdge " << selectedEdges.size() << std::endl;
+
+		//// minimum spainning tree - Kruskal
+		//DisjointSets ds(boost::num_vertices(mSkeleton));
+		//std::vector<SkelEdge> stemMinimumSpanningTree;
+
+		//for (int i = 0; i < selectedEdges.size(); ++i)
+		//{
+		//	int u = selectedEdges[i].m_source;
+		//	int v = selectedEdges[i].m_target;
+
+		//	int set_u = ds.find(u);
+		//	int set_v = ds.find(v);
+
+		//	// Check if the selected edge is creating a cycle or not 
+		//	// (Cycle is created if u and v belong to same set) 
+		//	if (set_u != set_v) {
+		//		ds.merge(set_u, set_v);		// Merge two sets 
+		//		stemMinimumSpanningTree.push_back(selectedEdges[i]);
+		//	}
+		//}
+		//std::cout << "stemMinimumSpanningTree size " << stemMinimumSpanningTree.size() << std::endl;
+
+		////burn time to single point. inverse burn: start with highest burn time.
+		////only look at node with one minus current burn time
+		//typedef boost::adjacency_list<boost::listS, boost::vecS, boost::undirectedS> subGraph;
+		//subGraph mstGraph;
+		//typedef boost::graph_traits<subGraph>::vertex_descriptor subV;
+		//typedef boost::graph_traits<subGraph>::edge_descriptor subE;
+		//typedef boost::graph_traits<subGraph>::vertex_iterator subVertIter;
+		//typedef boost::graph_traits<subGraph>::edge_iterator subEdgeIter;
+
+		////map mst subGraph to skeleton vertex
+		//std::vector<int> SkelVertToMSTMap(mSkeleton.m_vertices.size(), -1);
+		//std::vector<int> MSTToSkelVertMap(selectedNodes.size(), -1);
+		//for (SkelVert sv : selectedNodes)	// add vertices to mst graph
+		//{
+		//	int mstVert = boost::add_vertex(mstGraph);
+		//	SkelVertToMSTMap[(int)sv] = mstVert;
+		//	MSTToSkelVertMap[mstVert] = (int)sv;
+		//}
+		//for (SkelEdge se : stemMinimumSpanningTree)	// add edges to mst graph
+		//{
+		//	int sourceSkelVert = se.m_source;
+		//	int targetSkelVert = se.m_target;
+		//	boost::add_edge(SkelVertToMSTMap[sourceSkelVert], SkelVertToMSTMap[targetSkelVert], mstGraph);
+		//}
+		//std::cout << "vertice size " << boost::num_vertices(mstGraph) << std::endl;
+		//std::cout << "edge size " << boost::num_edges(mstGraph) << std::endl;
+
+		//// burning
+		//subGraph burningGraph = mstGraph;
+		//std::vector<std::vector<int>> burnTimeVertMap(boost::num_vertices(burningGraph)); // burn time to all vertices
+		//std::vector<std::vector<subE>> burnTimeEdgeMap(boost::num_edges(burningGraph)); // burn time to all edges
+		//std::vector<int> skelVertBTmap(boost::num_vertices(burningGraph), -1); // mst graph vert to burn time
+		//int burnRound = 0;
+		//bool burnable = true;
+		//int count = 0;
+		//while (burnable)
+		//{
+		//	burnable = false;
+		//	std::vector<subE> subGraphEdges;
+		//	subEdgeIter ei, ei_end;
+		//	std::vector<subE> burnedEdges;
+		//	for (std::tie(ei, ei_end) = boost::edges(burningGraph); ei != ei_end; ++ei)
+		//	{
+		//		subE e = boost::edge(ei->m_source, ei->m_target, burningGraph).first;
+
+		//		if (boost::degree(ei->m_source, burningGraph) > 1
+		//			&& boost::degree(ei->m_target, burningGraph) > 1)
+		//		{
+		//			subGraphEdges.push_back(e);
+		//		}
+		//		else
+		//		{
+		//			burnTimeEdgeMap[burnRound].push_back(e);
+
+		//			if (boost::degree(ei->m_source, burningGraph) == 1)
+		//			{
+		//				burnable = true;
+		//				skelVertBTmap[ei->m_source] = burnRound;
+		//				burnTimeVertMap[burnRound].push_back(ei->m_source);
+		//			}
+		//			if (boost::degree(ei->m_target, burningGraph) == 1)
+		//			{
+		//				burnable = true;
+		//				skelVertBTmap[ei->m_target] = burnRound;
+		//				burnTimeVertMap[burnRound].push_back(ei->m_target);
+		//			}
+		//			burnedEdges.push_back(e);
+		//		}
+		//	}
+		//	count += burnedEdges.size();
+		//	++burnRound;
+		//	if (subGraphEdges.size() < 1)
+		//	{
+		//		burnable = false;
+		//	}
+		//	for (subE e : burnedEdges)
+		//	{
+		//		boost::remove_edge(e, burningGraph);
+		//	}
+		//}
+
+		//// inverse burning 
+		//--burnRound;
+		//std::vector<subE> inverseBurnEdges = burnTimeEdgeMap[burnRound];
+		//std::vector<int> seedVertices = burnTimeVertMap[burnRound];
+		//int numEdge = 0;
+		//while (burnRound > 0)
+		//{
+		//	std::vector<int> nextSeedVertices;
+
+		//	for (int i = 0; i < seedVertices.size(); ++i)
+		//	{
+		//		float bestRadius = -1;
+		//		int bestSeed = -1;
+		//		subE bestEdge;
+
+		//		subGraph::adjacency_iterator adjIt, adjEnd;
+		//		boost::tie(adjIt, adjEnd) = boost::adjacent_vertices(seedVertices[i], mstGraph);
+		//		for (; adjIt != adjEnd; ++adjIt)
+		//		{
+		//			int v = *adjIt;
+
+		//			bool exists;
+		//			subE e;
+		//			boost::tie(e, exists) = boost::edge(seedVertices[i], v, mstGraph);
+		//			if (!exists || std::find(inverseBurnEdges.begin(), inverseBurnEdges.end(), e) != inverseBurnEdges.end())
+		//			{
+		//				continue;
+		//			}
+
+		//			int nextSeed = -1;
+		//			if (skelVertBTmap[e.m_source] == burnRound - 1)
+		//			{
+		//				nextSeed = e.m_source;
+		//			}
+		//			if (skelVertBTmap[e.m_target] == burnRound - 1)
+		//			{
+		//				nextSeed = e.m_target;
+		//			}
+		//			if (nextSeed != -1)
+		//			{
+		//				SkelVert skelV;
+		//				skelV = MSTToSkelVertMap[nextSeed];
+		//				if (getVertWidth(skelV, &mSkeleton) > bestRadius)
+		//				{
+		//					bestRadius = getVertWidth(skelV, &mSkeleton);
+		//					bestSeed = nextSeed;
+		//					bestEdge = e;
+		//				}
+		//			}
+
+		//		}
+
+		//		if (bestSeed > -1)
+		//		{
+		//			nextSeedVertices.push_back(bestSeed);
+		//			inverseBurnEdges.push_back(bestEdge);
+		//			numEdge++;
+		//		}
+		//	}
+
+		//	seedVertices = nextSeedVertices;
+		//	--burnRound;
+		//}
+		//for (subE e : inverseBurnEdges)
+		//{
+		//	SkelVert v0 = MSTToSkelVertMap[e.m_source];
+		//	SkelVert v1 = MSTToSkelVertMap[e.m_target];
+		//	autoStemVBO.push_back(v0);
+		//	autoStemVBO.push_back(v1);
+
+		//	bool exists;
+		//	SkelEdge se;
+		//	boost::tie(se, exists) = boost::edge(v0, v1, mSkeleton);
+		//	if (exists)
+		//	{
+		//		auto_stem.push_back(se);
+		//	}
+		//}
+		//std::cout << "auto_stem " << auto_stem.size() << std::endl;
+		//return;
 		std::cout << "low threshold " << lowThreshold << std::endl;
 		autoStemVBO.clear();
-
+		auto_stem.clear();
+		std::vector<float> edgeWeights;
 		// find highest radius
-		float maxWidth = 0.0, maxThickness = 0.0;
+		float maxWidth = 0.0;
 		skelVertIter svi = boost::vertices(mSkeleton);
-		SkelVert vertMaxWidth;
-
-		for (; svi.first != svi.second; ++svi)
+		SkelVert vertMaxWidth; //id for the vertex
+		for (; svi.first != svi.second; ++svi)//find out vertices with highest width and thickness
 		{
 			SkelVert vert = *svi.first;
 			if (getVertWidth(vert, &mSkeleton) > maxWidth)
@@ -2390,230 +2631,342 @@ namespace Roots
 				maxWidth = getVertWidth(vert, &mSkeleton);
 			}
 		}
-		std::cout << "vertMaxWidth " << vertMaxWidth << " max width " << maxWidth << std::endl;
-
 		// BFS to find all vertices whose thickness >= lowThreshold
-		std::set<SkelVert> visitedMap;
-		visitedMap.insert(vertMaxWidth);
-		std::set<SkelVert> selectedNodes;
-		selectedNodes.insert(vertMaxWidth);
+		std::vector<bool> visitedMap = std::vector<bool>(mSkeleton.m_vertices.size(), false);
+		//start from vertex with highest width and do BFS
+		visitedMap[vertMaxWidth] = true;
+		std::deque<SkelVert> selectedVert;
+		selectedVert.push_back(vertMaxWidth);
 		std::deque<SkelVert> queVert;
 		queVert.push_back(vertMaxWidth);
-		std::vector<SkelEdge> selectedEdges;
-
+		//BFS to find all vertices
 		while (!queVert.empty())
 		{
-			SkelVert root = queVert.front();
+			//MetaV node;
+			SkelVert vert = queVert.front();
 			queVert.pop_front();
+
 			BSkeleton::adjacency_iterator adjIt, adjEnd;
-			for (boost::tie(adjIt, adjEnd) = boost::adjacent_vertices(root, mSkeleton); adjIt != adjEnd; ++adjIt)
+			boost::tie(adjIt, adjEnd) = boost::adjacent_vertices(vert, mSkeleton);
+
+			int i = 0;
+			for (; adjIt != adjEnd; ++adjIt)
 			{
-				SkelVert child = *adjIt;
-				if (getVertWidth(child, &mSkeleton) >= lowThreshold && visitedMap.find(child) == visitedMap.end())
+				//MetaV leadNode;
+				SkelVert leadVert = *adjIt;
+				if (getVertWidth(leadVert, &mSkeleton) >= lowThreshold && !visitedMap[leadVert])
 				{
-					visitedMap.insert(child);
-					selectedNodes.insert(child);
-					queVert.push_back(child);
+					visitedMap[leadVert] = true;
+					queVert.push_back(leadVert);
+					selectedVert.push_back(leadVert);
 				}
 			}
 		}
+		std::cout << " size of selectedVert " << selectedVert.size() << std::endl;
 
-		for (skelEdgeIter sei = boost::edges(mSkeleton); sei.first != sei.second; ++sei) {
-			skelEIter e = sei.first;
-			if (selectedNodes.find(e->m_source) != selectedNodes.end() && selectedNodes.find(e->m_target) != selectedNodes.end()) { 
-				selectedEdges.push_back(*e);
+
+		// burn to a single point
+
+		std::deque<SkelEdge> selectedEdge;
+
+		skelEdgeIter sei = boost::edges(mSkeleton);
+		for (; sei.first != sei.second; ++sei)// find all the edges connected by the any two vertices in selectedVert
+		{
+
+			if (std::find(selectedVert.begin(), selectedVert.end(), sei.first->m_source) != selectedVert.end()
+				&& std::find(selectedVert.begin(), selectedVert.end(), sei.first->m_target) != selectedVert.end())// source and target are in selectedVert 
+			{
+				SkelEdge e;
+				bool exists = false;
+				boost::tie(e, exists) = boost::edge(sei.first->m_source, sei.first->m_target, mSkeleton);
+
+				if (exists)
+				{
+					selectedEdge.push_back(e);
+				}
 			}
 		}
-
-		std::sort(selectedEdges.begin(), selectedEdges.end(),
+		//sort edges by length
+		std::sort(selectedEdge.begin(), selectedEdge.end(),
 			[&](const SkelEdge& e1, const SkelEdge& e2) {
 			return getEdgeEuclidLength(e1, &mSkeleton) < getEdgeEuclidLength(e2, &mSkeleton);
 		});
-		std::cout << "Sorted " << std::endl;
-		std::cout << "Size of selectedEdge " << selectedEdges.size() << std::endl;
-
 		// minimum spainning tree - Kruskal
+		int mst_wt = 0; // Initialize result
 		DisjointSets ds(boost::num_vertices(mSkeleton));
 		std::vector<SkelEdge> stemMinimumSpanningTree;
 
-		for (int i = 0; i < selectedEdges.size(); ++i)
+		for (int i = 0; i < selectedEdge.size(); ++i)
 		{
-			int u = selectedEdges[i].m_source;
-			int v = selectedEdges[i].m_target;
+			int u = selectedEdge[i].m_source;
+			int v = selectedEdge[i].m_target;
 
 			int set_u = ds.find(u);
 			int set_v = ds.find(v);
 
 			// Check if the selected edge is creating a cycle or not 
 			// (Cycle is created if u and v belong to same set) 
-			if (set_u != set_v) {
+			if (set_u != set_v)
+			{
+				// Current edge will be in the MST, so print it 
+				mst_wt += getEdgeEuclidLength(selectedEdge[i], &mSkeleton);	// Update MST weight 
 				ds.merge(set_u, set_v);		// Merge two sets 
-				stemMinimumSpanningTree.push_back(selectedEdges[i]);
+				stemMinimumSpanningTree.push_back(selectedEdge[i]);
 			}
 		}
+		std::cout << "mst_wt " << mst_wt << std::endl;
 		std::cout << "stemMinimumSpanningTree size " << stemMinimumSpanningTree.size() << std::endl;
 
-		//burn time to single point. inverse burn: start with highest burn time.
+		//burn time to a single point. inverse burn: start with highest burn time.
 		//only look at node with one minus current burn time
-		typedef boost::adjacency_list<boost::listS, boost::vecS, boost::undirectedS> subGraph;
+		typedef property<edge_weight_t, float> EdgeWeightProperty;
+		typedef boost::adjacency_list<boost::listS, boost::vecS, boost::undirectedS, boost::no_property, EdgeWeightProperty> subGraph;
 		subGraph mstGraph;
 		typedef boost::graph_traits<subGraph>::vertex_descriptor subV;
 		typedef boost::graph_traits<subGraph>::edge_descriptor subE;
 		typedef boost::graph_traits<subGraph>::vertex_iterator subVertIter;
 		typedef boost::graph_traits<subGraph>::edge_iterator subEdgeIter;
-
+		//https://stackoverflow.com/questions/24366642/how-do-i-change-the-edge-weight-in-a-graph-using-the-boost-graph-library
+		typedef subGraph::edge_descriptor Edge;
 		//map mst subGraph to skeleton vertex
-		std::vector<int> SkelVertToMSTMap(mSkeleton.m_vertices.size(), -1);
-		std::vector<int> MSTToSkelVertMap(selectedNodes.size(), -1);
-		for (SkelVert sv : selectedNodes)	// add vertices to mst graph
+		std::vector<int> SkelVertMSTMap(mSkeleton.m_vertices.size(), -1);
+
+		std::vector<int> MSTSkelVertMap(selectedVert.size(), -1);
+		for (int i = 0; i < selectedVert.size(); ++i)	// add vertices to mst graph
 		{
-			int mstVert = boost::add_vertex(mstGraph);
-			SkelVertToMSTMap[(int)sv] = mstVert;
-			MSTToSkelVertMap[mstVert] = (int)sv;
+			int vert = boost::add_vertex(mstGraph);
+			int skelV = selectedVert[i];
+			SkelVertMSTMap[skelV] = vert;
+			MSTSkelVertMap[vert] = skelV;
 		}
-		for (SkelEdge se : stemMinimumSpanningTree)	// add edges to mst graph
+		for (int i = 0; i < stemMinimumSpanningTree.size(); ++i)	// add edges to mst graph
 		{
-			int sourceSkelVert = se.m_source;
-			int targetSkelVert = se.m_target;
-			boost::add_edge(SkelVertToMSTMap[sourceSkelVert], SkelVertToMSTMap[targetSkelVert], mstGraph);
+			SkelEdge e;
+			bool success;
+			int v0 = stemMinimumSpanningTree[i].m_source;
+			int v1 = stemMinimumSpanningTree[i].m_target;
+			boost::tie(e, success) = boost::add_edge(SkelVertMSTMap[v0], SkelVertMSTMap[v1], mstGraph);
+			std::pair<Edge, bool> edge = boost::edge(SkelVertMSTMap[v0], SkelVertMSTMap[v1], mstGraph);
+			float weight = ((&mSkeleton)->operator[](v0).width() + (&mSkeleton)->operator[](v1).width()) / 2;
+			//std::cout << weight << std::endl;
+			boost::put(boost::edge_weight_t(), mstGraph, edge.first, weight);
+
 		}
 		std::cout << "vertice size " << boost::num_vertices(mstGraph) << std::endl;
 		std::cout << "edge size " << boost::num_edges(mstGraph) << std::endl;
 
-		// burning
+		// burnning
 		subGraph burningGraph = mstGraph;
-		std::vector<std::vector<int>> burnTimeVertMap(boost::num_vertices(burningGraph)); // burn time to all vertices
-		std::vector<std::vector<subE>> burnTimeEdgeMap(boost::num_edges(burningGraph)); // burn time to all edges
+		std::vector<std::vector<int>> burnTimeVertMap; // burn time to all vertices
+		std::vector<std::vector<subE>> burnTimeEdgeMap; // burn time to all edges
+		std::map<subE, int> edgeToBurnround; //edge mapped to burnrounds
 		std::vector<int> skelVertBTmap(boost::num_vertices(burningGraph), -1); // mst graph vert to burn time
 		int burnRound = 0;
 		bool burnable = true;
 		int count = 0;
+		//burn edges
 		while (burnable)
 		{
+			burnTimeVertMap.push_back(std::vector<int>());
+			burnTimeEdgeMap.push_back(std::vector<subE>());
 			burnable = false;
 			std::vector<subE> subGraphEdges;
 			subEdgeIter ei, ei_end;
 			std::vector<subE> burnedEdges;
+			float minThickness = 100;//find the minimum thickness for the end edges of this round
+			for (std::tie(ei, ei_end) = boost::edges(burningGraph); ei != ei_end; ++ei) {
+				bool exists;
+				subE e;
+				boost::tie(e, exists) = boost::edge(ei->m_source, ei->m_target, burningGraph);
+				float weightE = get(boost::edge_weight_t(), burningGraph, e);
+				if (!(boost::degree(ei->m_source, burningGraph) > 1 && boost::degree(ei->m_source, burningGraph) > 1) && weightE < minThickness) {
+					minThickness = weightE;
+				}
+			}
+			//std::cout << "minWeight is " << minThickness << std::endl;
 			for (std::tie(ei, ei_end) = boost::edges(burningGraph); ei != ei_end; ++ei)
 			{
-				subE e = boost::edge(ei->m_source, ei->m_target, burningGraph).first;
+				bool exists;
+				subE e;
+				boost::tie(e, exists) = boost::edge(ei->m_source, ei->m_target, burningGraph);
 
+				if (!exists)
+					continue;
+				//this edge exists in the burning Graph
+				//this is an inner edge
+				std::pair<Edge, bool> ed = boost::edge(ei->m_source, ei->m_target, burningGraph);
+				float weight = get(boost::edge_weight_t(), burningGraph, ed.first);
 				if (boost::degree(ei->m_source, burningGraph) > 1
 					&& boost::degree(ei->m_target, burningGraph) > 1)
 				{
 					subGraphEdges.push_back(e);
 				}
+				else if (weight > minThickness) {
+					boost::put(boost::edge_weight_t(), burningGraph, ed.first, weight - minThickness);
+					subGraphEdges.push_back(e);
+					burnable = true;
+				}
 				else
 				{
-					burnTimeEdgeMap[burnRound].push_back(e);
 
+					burnTimeEdgeMap[burnRound].push_back(boost::edge(ei->m_source, ei->m_target, mstGraph).first);
+					edgeToBurnround[boost::edge(ei->m_source, ei->m_target, mstGraph).first] = burnRound;
+					//std::cout << "edgeToBurnround[e] is " << edgeToBurnround[boost::edge(ei->m_source, ei->m_target, mstGraph).first] << std::endl;
 					if (boost::degree(ei->m_source, burningGraph) == 1)
 					{
-						burnable = true;
 						skelVertBTmap[ei->m_source] = burnRound;
 						burnTimeVertMap[burnRound].push_back(ei->m_source);
 					}
 					if (boost::degree(ei->m_target, burningGraph) == 1)
 					{
-						burnable = true;
 						skelVertBTmap[ei->m_target] = burnRound;
 						burnTimeVertMap[burnRound].push_back(ei->m_target);
 					}
+
 					burnedEdges.push_back(e);
+					burnable = true;
 				}
+
 			}
 			count += burnedEdges.size();
 			++burnRound;
+
 			if (subGraphEdges.size() < 1)
 			{
 				burnable = false;
 			}
+
+			// if rest edges in burningGraph intersect at the same vertex
 			for (subE e : burnedEdges)
 			{
 				boost::remove_edge(e, burningGraph);
 			}
 		}
-
+		std::cout << "total burned edges are " << count << std::endl;
 		// inverse burning 
 		--burnRound;
-		std::vector<subE> inverseBurnEdges = burnTimeEdgeMap[burnRound];
+		std::vector<subE> BurnEdges = burnTimeEdgeMap[burnRound];
+		std::vector<subE> inverseBurnEdges;
 		std::vector<int> seedVertices = burnTimeVertMap[burnRound];
 		int numEdge = 0;
-		while (burnRound > 0)
-		{
-			std::vector<int> nextSeedVertices;
+		if (BurnEdges.size() == 1) {//only one edge at the end
 
-			for (int i = 0; i < seedVertices.size(); ++i)
-			{
-				float bestRadius = -1;
-				int bestSeed = -1;
-				subE bestEdge;
+			inverseBurnEdges.push_back(BurnEdges[0]);
+			std::vector<int> nextVertices = seedVertices;
+			burnRound--;
+			while (burnRound > 0) {
+				std::vector<int> nextVertices;
 
-				subGraph::adjacency_iterator adjIt, adjEnd;
-				boost::tie(adjIt, adjEnd) = boost::adjacent_vertices(seedVertices[i], mstGraph);
-				for (; adjIt != adjEnd; ++adjIt)
-				{
-					int v = *adjIt;
-
-					bool exists;
-					subE e;
-					boost::tie(e, exists) = boost::edge(seedVertices[i], v, mstGraph);
-					if (!exists || std::find(inverseBurnEdges.begin(), inverseBurnEdges.end(), e) != inverseBurnEdges.end())
-					{
-						continue;
-					}
-
-					int nextSeed = -1;
-					if (skelVertBTmap[e.m_source] == burnRound - 1)
-					{
-						nextSeed = e.m_source;
-					}
-					if (skelVertBTmap[e.m_target] == burnRound - 1)
-					{
-						nextSeed = e.m_target;
-					}
-					if (nextSeed != -1)
-					{
-						SkelVert skelV;
-						skelV = MSTToSkelVertMap[nextSeed];
-						if (getVertWidth(skelV, &mSkeleton) > bestRadius)
+				for (int i = 0; i < seedVertices.size(); i++) {
+					int bestSeed = -1;
+					subE bestEdge;
+					subGraph::adjacency_iterator adjIt, adjEnd;
+					boost::tie(adjIt, adjEnd) = boost::adjacent_vertices(seedVertices[i], mstGraph);
+					int largestRound = -1;
+					for (; adjIt != adjEnd; ++adjIt) {
+						int v = *adjIt;
+						bool exists;
+						subE e;
+						boost::tie(e, exists) = boost::edge(seedVertices[i], v, mstGraph);
+						if (!exists || std::find(inverseBurnEdges.begin(), inverseBurnEdges.end(), e) != inverseBurnEdges.end())
 						{
-							bestRadius = getVertWidth(skelV, &mSkeleton);
-							bestSeed = nextSeed;
-							bestEdge = e;
+							continue;
+						}
+						if (edgeToBurnround[e] > largestRound) {
+							if (e.m_source != seedVertices[i]) {
+								bestSeed = e.m_source;
+								bestEdge = e;
+								largestRound = edgeToBurnround[e];
+							}
+							else {
+								bestSeed = e.m_target;
+								bestEdge = e;
+								largestRound = edgeToBurnround[e];
+							}
 						}
 					}
 
+					if (bestSeed > -1) {
+						nextVertices.push_back(bestSeed);
+						inverseBurnEdges.push_back(bestEdge);
+					}
 				}
-
-				if (bestSeed > -1)
-				{
-					nextSeedVertices.push_back(bestSeed);
-					inverseBurnEdges.push_back(bestEdge);
-					numEdge++;
+				seedVertices = nextVertices;
+				--burnRound;
+			}
+		}
+		else {//only one seed in the last round
+			std::cout << "multiple edges left" << std::endl;
+			float burnW = -1;
+			subE bestE;
+			for (subE edge : burnTimeEdgeMap[burnRound]) {
+				if (get(boost::edge_weight_t(), mstGraph, edge) > burnW) {
+					burnW = get(boost::edge_weight_t(), mstGraph, edge);;
+					bestE = edge;
 				}
 			}
+			inverseBurnEdges.push_back(bestE);
+			seedVertices.clear();
+			seedVertices.push_back(bestE.m_source);
+			seedVertices.push_back(bestE.m_target);
+			burnRound--;
+			while (burnRound > 0) {
+				std::vector<int> nextVertices;
+				for (int i = 0; i < seedVertices.size(); i++) {
+					int bestSeed = -1;
+					subE bestEdge;
+					subGraph::adjacency_iterator adjIt, adjEnd;
+					boost::tie(adjIt, adjEnd) = boost::adjacent_vertices(seedVertices[i], mstGraph);
+					int largestRound = -1;
+					for (; adjIt != adjEnd; ++adjIt) {
+						int v = *adjIt;
+						bool exists;
+						subE e;
+						boost::tie(e, exists) = boost::edge(seedVertices[i], v, mstGraph);
+						if (!exists || std::find(inverseBurnEdges.begin(), inverseBurnEdges.end(), e) != inverseBurnEdges.end())
+						{
+							continue;
+						}
+						if (edgeToBurnround[e] > largestRound) {
+							if (e.m_source != seedVertices[i]) {
+								bestSeed = e.m_source;
+								bestEdge = e;
+								largestRound = edgeToBurnround[e];
+							}
+							else {
+								bestSeed = e.m_target;
+								bestEdge = e;
+								largestRound = edgeToBurnround[e];
+							}
+						}
+					}
+					if (bestSeed > -1) {
+						nextVertices.push_back(bestSeed);
+						inverseBurnEdges.push_back(bestEdge);
+					}
+				}
+				seedVertices = nextVertices;
+				--burnRound;
+			}
 
-			seedVertices = nextSeedVertices;
-			--burnRound;
 		}
+		std::cout << "inverBurnEdges.size is " << inverseBurnEdges.size() << std::endl;
 		for (subE e : inverseBurnEdges)
 		{
-			SkelVert v0 = MSTToSkelVertMap[e.m_source];
-			SkelVert v1 = MSTToSkelVertMap[e.m_target];
+
+			SkelVert v0 = MSTSkelVertMap[e.m_source];
+			SkelVert v1 = MSTSkelVertMap[e.m_target];
 			autoStemVBO.push_back(v0);
 			autoStemVBO.push_back(v1);
-
 			bool exists;
 			SkelEdge se;
 			boost::tie(se, exists) = boost::edge(v0, v1, mSkeleton);
+
 			if (exists)
 			{
 				auto_stem.push_back(se);
 			}
 		}
-		std::cout << "auto_stem " << auto_stem.size() << std::endl;
-		return;
 	}
 
 
@@ -2875,14 +3228,13 @@ namespace Roots
 							if (branchExceedsStemBoundary(&visited, sequence, auto_stem_metaNode[i], target, 2.0f)) {
 								std::cout << " that exceeds the stem boundary";
 								validBranchesOnNode++;
-								//primary_branches.push_back(*ei);
 
-								// Trace branches
-								std::set<MetaV> visitedWhenTracingBranch;
-								for (MetaV mv : auto_stem_metaNode) {
-									visitedWhenTracingBranch.insert(mv);
-								}
-								traceBranch(auto_stem_metaNode[i], target, sequence, &visitedWhenTracingBranch, 10.0f, 0.707f);
+								//// Trace branches
+								//std::set<MetaV> visitedWhenTracingBranch;
+								//for (MetaV mv : auto_stem_metaNode) {
+								//	visitedWhenTracingBranch.insert(mv);
+								//}
+								//traceBranch(auto_stem_metaNode[i], target, sequence, &visitedWhenTracingBranch, 10.0f, 0.707f);
 							}
 							std::cout << std::endl;
 						}
@@ -2891,9 +3243,7 @@ namespace Roots
 
 				if (validBranchesOnNode > 0) {
 					// Find the branching points
-					std::set<MetaV> visitedWhenFindingBranchingPoints;
-					SkelVert source = operator[](auto_stem_metaNode[i]).mSrcVert;
-					findBranchingPointsWithParent(source, source, sequence, &visitedWhenFindingBranchingPoints, 1.2f);
+					findBranchingPointsWithParent(auto_stem_metaNode[i], sequence, 1.0f);
 				}
 
 				// Put the position values into the input vector, each repeating j times 
@@ -2904,11 +3254,8 @@ namespace Roots
 				}
 			}
 
-			for (std::map<SkelVert, SkelVert>::iterator it = allBranchingPointsWithParent.begin(); it != allBranchingPointsWithParent.end(); ++it) {
-				std::cout << it->first << std::endl;
-			}
-
 			// Trace branches from branching points
+			std::set<SkelVert> pathTaken;
 			for (std::map<SkelVert, SkelVert>::iterator it = allBranchingPointsWithParent.begin(); it != allBranchingPointsWithParent.end(); ++it) {
 				std::set<SkelVert> visitedWhenTracingBranchesUsingLongestPath;
 				SkelVert parent = it->second;
@@ -2916,7 +3263,7 @@ namespace Roots
 				visitedWhenTracingBranchesUsingLongestPath.insert(parent);
 				std::map<SkelVert, SkelVert> childToParentMap;
 				std::map<SkelVert, float> pathLength;
-				traceBranchUsingLongestPath(branchingPoint, sequence, &visitedWhenTracingBranchesUsingLongestPath, 150.0f, 50.0f, 0.6f, 5);
+				traceBranchUsingLongestPath(branchingPoint, sequence, &pathTaken, visitedWhenTracingBranchesUsingLongestPath, 100.0f, 50.0f, 0.6f, 10);
 			}
 		}
 
@@ -2956,6 +3303,24 @@ namespace Roots
 			std::cout << std::endl << std::endl;
 		}
 
+		std::map<SkelVert, float> allValidBranchingPointToAutoStemMetaDistMap;
+		for(SkelVert validBranchingPoint : allValidBranchingPoints) {
+			MetaV stemNode = branchingPointToStemNodeWithDistanceMap[validBranchingPoint].first;
+			int index = -1;
+			for (int i = 0; i < (int)cluster_input.size(); ++i) {
+				if (cluster_input[i] == stemNode) {
+					index = i;
+				}
+			}
+			allValidBranchingPointToAutoStemMetaDistMap[validBranchingPoint] = cluster[index];
+		}
+
+		std::map<SkelVert, float>::iterator it = allValidBranchingPointToAutoStemMetaDistMap.begin();
+		while (it != allValidBranchingPointToAutoStemMetaDistMap.end()) {
+			std::cout << "BranchingPoint: " << it->first << " MetaDist: " << it->second << std::endl;
+			++it;
+		}
+
 		// Delete the clusters that associate to only two or less vertices
 		std::map<float, int> count;
 		for (float f : cluster) ++count[f];
@@ -2973,6 +3338,7 @@ namespace Roots
 		std::cout << "cluster input size: " << cluster_input_position.size() << std::endl;
 		for (int i = 0; i < cluster.size(); ++i)
 		{
+			int branchCount = 0;
 			std::cout << i << std::endl;
 			// Find index according to distance
 			auto low = std::lower_bound(cluster_input_position.begin(), cluster_input_position.end(), cluster[i]);
@@ -2981,17 +3347,27 @@ namespace Roots
 			}
 			float val = *low;
 			std::cout << "cluster[" << i << "] = " << cluster[i] << std::endl;
-			std::cout << "lower_bound = " << val << std::endl;
+			//std::cout << "lower_bound = " << val << std::endl;
 
 			int node_index = low - cluster_input_position.begin();
-			std::cout << "node index: " << node_index << std::endl;
-			std::cout << "node position: " << cluster_input_position[node_index] << std::endl;
+			//std::cout << "node index: " << node_index << std::endl;
+			//std::cout << "node position: " << cluster_input_position[node_index] << std::endl;
 			if (node_index > 0 && std::abs(cluster[i] - cluster_input_position[node_index - 1]) < std::abs(cluster[i] - cluster_input_position[node_index]))
 			{
 				node_index = node_index - 1;
-				std::cout << "node index: " << node_index << std::endl;
-				std::cout << "node position: " << cluster_input_position[node_index] << std::endl;
+				//std::cout << "node index: " << node_index << std::endl;
+				//std::cout << "node position: " << cluster_input_position[node_index] << std::endl;
 			}
+
+			std::map<SkelVert, float>::iterator it = allValidBranchingPointToAutoStemMetaDistMap.begin();
+			while (it != allValidBranchingPointToAutoStemMetaDistMap.end()) {
+				if (it->second == cluster[i]) {
+					branchCount++;
+				}
+				++it;
+			}
+
+			std::cout << "Branch Count: " << branchCount << std::endl;
 
 			// Find node according to index
 			BoundingBox b;
@@ -3040,12 +3416,12 @@ namespace Roots
 	bool BMetaGraph::branchExceedsStemBoundary(std::set<MetaV> *visited, std::deque<SkelVert> stem, MetaV prev, MetaV self, float timesThickness) {
 		
 		// Stop tracing if the current node is already visited
-		if ((*visited).count(self)) {
+		if (visited->count(self)) {
 			return false;
 		}
 
 		// Mark the current node as visited
-		(*visited).insert(self);
+		visited->insert(self);
 
 		SkelVert srcSelf = operator[](self).mSrcVert;
 		if (vertexIsOutOfRadiusRange(srcSelf, stem, timesThickness)) {
@@ -3126,7 +3502,7 @@ namespace Roots
 		return currSkel;
 	}
 
-	void BMetaGraph::traceBranchUsingLongestPath(SkelVert branchingPoint, std::deque<SkelVert> stem, std::set<SkelVert> *visited, float searchDistance, float minimumBranchLength, float radiusRangeCoeff, int scoringWindowSize) {
+	void BMetaGraph::traceBranchUsingLongestPath(SkelVert branchingPoint, std::deque<SkelVert> stem, std::set<SkelVert> *pathTaken, std::set<SkelVert> visited, float searchDistance, float minimumBranchLength, float radiusRangeCoeff, int scoringWindowSize) {
 		std::deque<std::pair<SkelVert, float>> bfsQueue;
 		std::set<SkelVert> stemVertSet;
 		std::set<SkelVert> pathEnds;
@@ -3136,9 +3512,9 @@ namespace Roots
 			stemVertSet.insert(sv);
 		}
 		bfsQueue.push_back(std::make_pair(branchingPoint, searchDistance));
-		visited->insert(branchingPoint);
-		childToParentMap.insert({ branchingPoint, branchingPoint });
-		pathLength.insert({ branchingPoint, 0.0f });
+		visited.insert(branchingPoint);
+		childToParentMap[branchingPoint] = branchingPoint;
+		pathLength[branchingPoint] = 0.0f;
 		while (bfsQueue.size() != 0) {
 			SkelVert source = bfsQueue.front().first;
 			float distanceLeft = bfsQueue.front().second;
@@ -3150,43 +3526,43 @@ namespace Roots
 			typename graph_traits<BSkeleton>::out_edge_iterator ei, ei_end;
 			for (boost::tie(ei, ei_end) = out_edges(source, mSkeleton); ei != ei_end; ++ei) {
 				SkelVert target = boost::target(*ei, mSkeleton);
-				if (std::find(visited->begin(), visited->end(), target) == visited->end() 
-					&& vertexIsOutOfRadiusRange(target, stem, radiusRangeCoeff)) {
-					visited->insert(target);
-					childToParentMap.insert({ target, source });
+				if (std::find(visited.begin(), visited.end(), target) == visited.end()
+					&& vertexIsOutOfRadiusRange(target, stem, radiusRangeCoeff)
+					&& pathTaken->count(target) == 0) {
+					visited.insert(target);
+					childToParentMap[target] = source;
 					SkelEdge edge = boost::edge(source, target, mSkeleton).first;
 					float edgeLength = (&mSkeleton)->operator[](edge).euclidLength;
-					pathLength.insert({ target, pathLength.at(source) + edgeLength });
+					pathLength[target] = pathLength[source] + edgeLength;
 					bfsQueue.push_back(std::make_pair(target, distanceLeft - edgeLength));
 				}
 			}
 		}
 		float maxPathLength = FLT_MIN;
 		for (SkelVert pathEnd : pathEnds) {
-			std::cout << "    pathEnd: " << pathEnd << " pathLength: " << pathLength.at(pathEnd) << std::endl;
-			if (pathLength.at(pathEnd) > maxPathLength) {
-				maxPathLength = pathLength.at(pathEnd);
+			//std::cout << "    pathEnd: " << pathEnd << " pathLength: " << pathLength[pathEnd] << std::endl;
+			if (pathLength[pathEnd] > maxPathLength) {
+				maxPathLength = pathLength[pathEnd];
 			}
 		}
-		std::cout << "branchingPoint: " << branchingPoint << " maxPathLength: " << maxPathLength << std::endl;
 		if (maxPathLength < minimumBranchLength) {
 			return;
 		}
-		float percentLongestThreshold = 0.9 * maxPathLength;
+		float percentLongestThreshold = 0.8 * maxPathLength;
 		SkelVert bestPathBuffer = INT64_MAX;
 		float scoreBuffer = FLT_MAX;
 		for (SkelVert pathEnd : pathEnds) {
-			if (pathLength.at(pathEnd) < percentLongestThreshold) {
+			if (pathLength[pathEnd] < percentLongestThreshold) {
 				continue;
 			}
 			std::vector<SkelVert> path;
-			SkelVert predecessor = childToParentMap.at(pathEnd);
+			SkelVert predecessor = childToParentMap[pathEnd];
 			SkelVert self = pathEnd;
 			path.push_back(pathEnd);
 			while (predecessor != self) {
 				path.push_back(predecessor);
 				self = predecessor;
-				predecessor = childToParentMap.at(predecessor);
+				predecessor = childToParentMap[predecessor];
 			}
 			if (path.size() < 3 + scoringWindowSize) {
 				continue;
@@ -3227,40 +3603,69 @@ namespace Roots
 				bestPathBuffer = pathEnd;
 			}
 		}
-		std::cout << "branchingPoint: " << branchingPoint << " bestPath: " << bestPathBuffer << std::endl;
+		std::cout 
+			<< "branchingPoint: " << branchingPoint 
+			<< " StemNode: " << branchingPointToStemNodeWithDistanceMap[branchingPoint].first 
+			<< " Distance: " << branchingPointToStemNodeWithDistanceMap[branchingPoint].second 
+			<< " BestPathTo: " << bestPathBuffer 
+			<< " MaxPathLength: " << maxPathLength << std::endl;
 		if (bestPathBuffer == INT64_MAX) {
 			return;
 		}
 		allValidBranchingPoints.insert(branchingPoint);
 		std::vector<SkelVert> bestPath;
-		SkelVert predecessor = childToParentMap.at(bestPathBuffer);
+		SkelVert predecessor = childToParentMap[bestPathBuffer];
 		SkelVert self = bestPathBuffer;
 		bestPath.push_back(bestPathBuffer);
+		pathTaken->insert(bestPathBuffer);
 		while (predecessor != self) {
 			bestPath.push_back(predecessor);
+			pathTaken->insert(predecessor);
 			self = predecessor;
-			predecessor = childToParentMap.at(predecessor);
+			predecessor = childToParentMap[predecessor];
 		}
-		for (size_t i = 1; i < bestPath.size() - 1; ++i) {
+		for (size_t i = 1; i < bestPath.size(); ++i) {
 			traceBranchVBO.push_back(bestPath[i - 1]);
 			traceBranchVBO.push_back(bestPath[i]);
 		}
 	}
 
-	void BMetaGraph::findBranchingPointsWithParent(SkelVert parent, SkelVert curr, std::deque<SkelVert> stem, std::set<SkelVert> *visited, float radiusRangeCoeff) {
-		if (visited->count(curr) || (std::find(stem.begin(), stem.end(), curr) != stem.end() && parent != curr)) {
-			return;
+	void BMetaGraph::findBranchingPointsWithParent(MetaV stemNode, std::deque<SkelVert> stem, float radiusRangeCoeff) {
+		std::deque<SkelVert> bfsQueue;
+		std::set<SkelVert> visitedNew;
+		std::set<SkelVert> stemVertSet;
+		std::map<SkelVert, SkelVert> childToParentMap;
+		std::map<SkelVert, float> pathLength;
+		for (SkelVert sv : stem) {
+			stemVertSet.insert(sv);
 		}
-		if (vertexIsOutOfRadiusRange(curr, stem, radiusRangeCoeff)) {
-			allBranchingPointsWithParent.insert({ curr, parent });
-			return;
-		}
-		visited->insert(curr);
-		typename graph_traits<BSkeleton>::out_edge_iterator ei, ei_end;
-		for (boost::tie(ei, ei_end) = out_edges(curr, mSkeleton); ei != ei_end; ++ei) {
-			MetaV target = boost::target(*ei, mSkeleton);
-			if (target != parent) {
-				findBranchingPointsWithParent(curr, target, stem, visited, radiusRangeCoeff);
+		SkelVert origin = operator[](stemNode).mSrcVert;
+		bfsQueue.push_back(origin);
+		visitedNew.insert(origin);
+		childToParentMap[origin] = origin;
+		pathLength[origin] = 0.0f;
+		while (bfsQueue.size() != 0) {
+			SkelVert source = bfsQueue.front();
+			bfsQueue.pop_front();
+			if (vertexIsOutOfRadiusRange(source, stem, radiusRangeCoeff)) {
+				allBranchingPointsWithParent[source] = childToParentMap[source];
+				if (branchingPointToStemNodeWithDistanceMap.count(source) == 0 || pathLength[source] < branchingPointToStemNodeWithDistanceMap[source].second) {
+					branchingPointToStemNodeWithDistanceMap[source] = std::make_pair(stemNode, pathLength[source]);
+				}
+				continue;
+			}
+			typename graph_traits<BSkeleton>::out_edge_iterator ei, ei_end;
+			for (boost::tie(ei, ei_end) = out_edges(source, mSkeleton); ei != ei_end; ++ei) {
+				SkelVert target = boost::target(*ei, mSkeleton);
+				if (visitedNew.count(target) == 0
+					&& stemVertSet.count(target) == 0) {
+					bfsQueue.push_back(target);
+					visitedNew.insert(target);
+					childToParentMap[target] = source;
+					SkelEdge edge = boost::edge(source, target, mSkeleton).first;
+					float edgeLength = (&mSkeleton)->operator[](edge).euclidLength;
+					pathLength[target] = pathLength[source] + edgeLength;
+				}
 			}
 		}
 	}
