@@ -767,6 +767,7 @@ namespace Roots{
 		void FindPrimaryNodeOperation(float look_distance, float kernel_bandwidth);
 		float getRelativeDistance(SkelVert sv1, SkelVert sv2);
 		bool vertexIsOutOfRadiusRange(SkelVert src, std::deque<SkelVert> stem, float timesThickness);
+		float vertexToStemDistance(SkelVert src, std::deque<SkelVert> stem);
 		bool branchLongerThanThreshold(MetaV prev, MetaV self, float threshold);
 		bool branchExceedsStemBoundary(std::set<MetaV> *visited, std::deque<SkelVert> stem, MetaV prev, MetaV self, float threshold);
 		BSkeleton fairSkeleton(BSkeleton skel, int iterationRound);
