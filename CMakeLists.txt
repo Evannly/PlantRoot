@@ -1,6 +1,5 @@
 cmake_minimum_required (VERSION 3.0)
 
-
 project(RootsToolC)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -11,15 +10,13 @@ file(GLOB Roots_src
 "*.cpp"
 )
 
-
 ######################### MACROS #########################
 
-set(DEPENDENCIES_DIR "C:/Users/topplab/Documents/Dependencies" CACHE PATH "Directory for all dependencies" FORCE)
-set(PROJECT_DIR "C:/Users/topplab/Documents/Github/PlantRoot" CACHE PATH "Directory for all dependencies" FORCE)
-set(PYTHON_DIR "C:/Program Files/Python37" CACHE PATH "Python directory" FORCE)
+set(DEPENDENCIES_DIR "D:/Dependencies" CACHE PATH "Directory for all dependencies" FORCE)
+set(PROJECT_DIR "D:/Git/PlantRoot" CACHE PATH "Directory for all dependencies" FORCE)
+set(PYTHON_DIR "C:/Users/Ethan/AppData/Local/Programs/Python/Python37" CACHE PATH "Python directory" FORCE)
 
 ####################### END MACROS #######################
-
 
 set(BOOST_INCLUDEDIR "${DEPENDENCIES_DIR}/boost_1_68_0/boost" CACHE PATH "Boost header directory" FORCE)
 set(BOOST_ROOT "${DEPENDENCIES_DIR}/boost_1_68_0" CACHE PATH "Boost root directory" FORCE)
@@ -28,7 +25,7 @@ set(GLFW_INCLUDEDIR "${DEPENDENCIES_DIR}/glfw-3.3.bin.WIN64/include" CACHE PATH 
 set(GLFW_LIB "${DEPENDENCIES_DIR}/glfw-3.3.bin.WIN64/lib-vc2015/glfw3.lib" CACHE STRING "glfw compiled library")
 set(GLAD_INCLUDEDIR "${DEPENDENCIES_DIR}/glad/include" CACHE PATH "GLAD include directory")
 
-set(BoostPythonLib "${DEPENDENCIES_DIR}/boost_1_68_0/stage/lib/libboost_python37-vc141-mt-gd-x64-1_68.lib" CACHE STRING "boost python library")
+set(BoostPythonLib "${DEPENDENCIES_DIR}/boost_1_68_0/stage/lib/libboost_python37-vc140-mt-gd-x64-1_68.lib" CACHE STRING "boost python library")
 
 set(OpenCV_DIR "${DEPENDENCIES_DIR}/opencv/build" CACHE PATH "Opencv Include" FORCE)
 option(OPENCV_ENABLE "description" OFF)
