@@ -23,18 +23,18 @@ namespace
 typedef boost::graph_traits<BoostSkeleton>::vertex_iterator skelVIter;
 typedef boost::graph_traits<BoostSkeleton>::edge_iterator skelEIter;
 
-struct skelVertIter : std::pair<skelVIter, skelVIter>
+struct SkelVertIterator : std::pair<skelVIter, skelVIter>
 {
-	skelVertIter(const std::pair<skelVIter, skelVIter> &other)
+	SkelVertIterator(const std::pair<skelVIter, skelVIter> &other)
 		:std::pair<skelVIter, skelVIter>(other)
 	{
 	}
-	skelVertIter operator++()
+	SkelVertIterator operator++()
 	{
 		++this->first;
 		return *this;
 	}
-	skelVertIter operator--()
+	SkelVertIterator operator--()
 	{
 		--this->second;
 		return *this;
@@ -240,7 +240,7 @@ namespace Roots
 		/*
 		Finds all vertices of degree != 2
 		*/
-		std::vector<SkelVert> GetNotableVertices();
+		std::vector<SkelVert> getMetaNodes();
 
 		void normalizeEdgeAttributes();
 	};

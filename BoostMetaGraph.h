@@ -227,19 +227,18 @@ namespace Roots{
 		static float minThickness, maxThickness, minWidth, maxWidth, minRatio, maxRatio, minComponent, maxComponent, minDegree, maxDegree;
 	};
 	
-
-
-
 	struct BMetaGraph : public BoostMetaGraph
 	{
 		/*vvvvvvvvvvvvvvvvvvvvv MEMBER VARIABLES vvvvvvvvvvvvvvvvvvvvv*/
-		//the skeleton from which this metagraph is constructed
+
+		// The skeleton from which this metagraph is constructed
 		BSkeleton mSkeleton;
 
-		//map between skeleton vertices and their corresponding metanodes
+		// Map between skeleton vertices and their corresponding metanodes
 		std::map<SkelVert, MetaV> vertNodeMap;
+		std::map<MetaV, SkelVert> nodeVertMap;
 
-		//vector correlating each edge to a connected component
+		// Vectors correlating each edge to a connected component
 		std::vector<int> mComponentMap;
 		std::vector<float> mComponentSizeMap;
 		std::vector<MetaE> mMinimumSpanningTree;
@@ -317,9 +316,12 @@ namespace Roots{
 		bool showStem;
 		bool showTracedBranches;
 		bool tracePrimaryBranches;
-		std::vector<MetaE> StemPath;
+		std::string skeleton_file_name;
+		//std::vector<MetaE> StemPath;
 		std::vector<MetaV> StemPath_node;
 		std::vector<SkelEdge> auto_stem;
+		std::vector<MetaV> auto_stem_metaNode;
+		std::vector<MetaE> auto_stem_metaEdge;
 		std::vector<MetaE> primary_branches;
 		std::vector<std::tuple<MetaV, SkelVert, std::vector<SkelEdge>>> branches;
 		std::map<SkelVert, SkelVert> allBranchingPointsWithParent;
@@ -800,12 +802,13 @@ namespace Roots{
 		int *parent, *rnk;
 		int n;
 
-		// Constructor. 
 		DisjointSets(int n);
-		// Find the parent of a node 'u' 
-		// Path Compression 
+
+		// find the parent of a node 'u' 
+		// path Compression 
 		int find(int u);
-		// Union by rank 
+
+		// union by rank 
 		void merge(int x, int y);
 	};
 }

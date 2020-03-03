@@ -838,7 +838,7 @@ namespace Roots
 		if (isValid)
 		{
 			int ite = 0;
-			for (MetaE temp : StemPath)
+			for (MetaE temp : auto_stem_metaEdge)
 			{
 				// selected node is on the stem
 				if ((node == temp.m_source) || (node == temp.m_target))
@@ -846,7 +846,7 @@ namespace Roots
 					break;
 				}
 				ite++;
-				if (ite == StemPath.size())
+				if (ite == auto_stem_metaEdge.size())
 				{
 					return;
 				}
@@ -1562,49 +1562,22 @@ namespace Roots
 
 	MetaV BMetaGraph::selectNodeByRender(int mouseX, int mouseY, bool &isValid)
 	{
-		std::cout << "Selecting node by render " << std::endl;
+		std::cout << "Selecting node by render: " << mouseX << " " << mouseY << std::endl;
 		nodePickRender();
 		glFlush();
 		glFinish();
 
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-//#ifdef WITH_OPENCV
-//		unsigned char img[480000];
-//		glReadPixels(mouseX - 200, mouseY - 200, 400, 400, GL_RGB, GL_UNSIGNED_BYTE, img);
-//
-//		cv::Mat clickMat = cv::Mat(400, 400, CV_8UC3);
-//
-//		uchar *clickptr = clickMat.ptr<uchar>();
-//		uchar *imgptr;
-//		for (int row = 0; row < 400; ++row)
-//		{
-//			clickptr = clickMat.ptr<uchar>(399 - row);
-//			imgptr = img + 3 * 400 * row;
-//			for (int col = 0; col < 400; ++col)
-//			{
-//				for (int c = 0; c < 3; ++c)
-//				{
-//					clickptr[col * 3 + c] = imgptr[col * 3 + c];
-//				}
-//			}
-//		}
-//
-//		cv::namedWindow("clickArea", CV_WINDOW_NORMAL);
-//		cv::imshow("clickArea", clickMat);
-//		cv::waitKey();
-//#endif // WITH_OPENCV
-
-		
 		unsigned char data[3];
 		glReadPixels(mouseX, mouseY, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, data);
 		int pickedID =
 			data[0] +
 			data[1] * 256 +
 			data[2] * 256 * 256;
-		std::cout << "Picked Id " << pickedID << std::endl;
+		//std::cout << "Picked Id " << pickedID << std::endl;
 
-		std::cout << "RGB " << (int)data[0] << " " << (int)data[1] << " " << (int)data[2] << std::endl;
+		//std::cout << "RGB " << (int)data[0] << " " << (int)data[1] << " " << (int)data[2] << std::endl;
 
 		if (this->m_vertices.size() > pickedID)
 		{
@@ -1663,7 +1636,7 @@ namespace Roots
 		float minDist = 100000000;
 		SkelVert vertHit = 0;
 
-		skelVertIter svi = boost::vertices(mSkeleton);
+		SkelVertIterator svi = boost::vertices(mSkeleton);
 		for (; svi.first != svi.second; ++svi)
 		{
 			Point3d *vert = &mSkeleton[*svi.first];

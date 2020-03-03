@@ -74,7 +74,7 @@ namespace Roots
 		out << vertexString << " " << m_vertices.size() << std::endl;
 		out << edgeString << " " << m_edges.size() << std::endl;
 		out << endHeaderString << std::endl;
-		skelVertIter vi = boost::vertices(*this);
+		SkelVertIterator vi = boost::vertices(*this);
 		while (vi.first != vi.second)
 		{
 			out << getVertData(*vi.first) << std::endl;
@@ -214,7 +214,7 @@ namespace Roots
 	void BSkeleton::writeDanPly(std::ostream &os)
 	{
 
-		skelVertIter svi = boost::vertices(*this);
+		SkelVertIterator svi = boost::vertices(*this);
 
 		for (; svi.first != svi.second; ++svi)
 		{
@@ -384,7 +384,7 @@ namespace Roots
 			mMaxZ = -big;
 
 			Point3d p;
-			skelVertIter it = boost::vertices(*this);
+			SkelVertIterator it = boost::vertices(*this);
 			while (it.first != it.second)
 			{
 				p = getVertData(*(it.first));
@@ -407,7 +407,7 @@ namespace Roots
 		Point3d maxPoint = Point3d(mMaxX, mMaxY, mMaxZ, 0, 0);
 
 		Point3d sum = Point3d();
-		skelVertIter vIter = boost::vertices(*this);
+		SkelVertIterator vIter = boost::vertices(*this);
 		for(; vIter.first != vIter.second; ++vIter)
 		{
 			sum = sum + operator[](*vIter.first);
@@ -426,7 +426,7 @@ namespace Roots
 		Point3d offset = newCenter - mCenter;
 		mCenter = newCenter;
 
-		skelVertIter svi = boost::vertices(*this);
+		SkelVertIterator svi = boost::vertices(*this);
 		while (svi.first != svi.second)
 		{
 			operator[](*svi.first) += offset;
@@ -476,18 +476,15 @@ namespace Roots
 		return operator[](v);
 	}
 
-	std::vector<SkelVert> BSkeleton::GetNotableVertices()
+	// iterate through all skeleton vertices to find the endpoints and junctions
+	// the endpoints and junctions are used to build MetaNodes
+	std::vector<SkelVert> BSkeleton::getMetaNodes()
 	{
-		std::vector<SkelVert> result = {};
-		skelVertIter vi = boost::vertices(*this);
-		while (vi.first != vi.second)
+		std::vector<SkelVert> result;
+		for (SkelVertIterator vi = boost::vertices(*this); vi.first != vi.second; ++vi)
 		{
 			int deg = boost::degree(*vi.first, *this);
-			if (deg != 2 && deg != 0)
-			{
-				result.push_back(*vi.first);
-			}
-			++vi;
+			if (deg == 1 || deg >= 3) result.push_back(*vi.first);
 		}
 		return result;
 	}
@@ -548,7 +545,7 @@ void PySkeleton::reload()
 		return;
 	}
 	
-	for (skelVertIter svi = boost::vertices(*mSkeleton); svi.first != svi.second; ++svi)
+	for (SkelVertIterator svi = boost::vertices(*mSkeleton); svi.first != svi.second; ++svi)
 	{
 		Point3d vertexAdded = mSkeleton->operator[](*svi.first);
 		//std::cout << "Vertex reloaded " << vertexAdded << std::endl;

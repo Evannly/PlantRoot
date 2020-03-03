@@ -30,26 +30,26 @@ namespace Roots
 	void BMetaGraph::showEdges(bool doShow)
 	{
 		edgeOptions.show = doShow;
-		std::cout << "Do show edges " << doShow << std::endl;
+		//std::cout << "Do show edges " << doShow << std::endl;
 	}
 
 	void BMetaGraph::setEdgeScale(float scale)
 	{
 		edgeOptions.scale = scale;
-		std::cout << "Set edge scale " << scale << std::endl;
+		//std::cout << "Set edge scale " << scale << std::endl;
 	}
 
 	void BMetaGraph::magnifyNonBridges(bool doMagnify)
 	{
 		edgeOptions.magnifyNonBridges = doMagnify;
-		std::cout << "Magnify non-bridges " << std::to_string(doMagnify) << std::endl;
+		//std::cout << "Magnify non-bridges " << std::to_string(doMagnify) << std::endl;
 	}
 
 	// show loops
 	void BMetaGraph::showOnlyNonBridges(bool showOnly)
 	{
 		edgeOptions.showOnlyNonBridges = showOnly;
-		std::cout << "Show only non-bridges " << std::to_string(showOnly) << std::endl;
+		//std::cout << "Show only non-bridges " << std::to_string(showOnly) << std::endl;
 	}
 
 	void BMetaGraph::assignEdgeHeatMap(boost::python::list heatmap)
@@ -76,22 +76,22 @@ namespace Roots
 	void BMetaGraph::colorizeEdgesByThickness()
 	{
 		edgeOptions.colorization = ColorizationOptions::ByThickness;
-		std::cout << "Colorize edges by thickness " << std::endl;
+		//std::cout << "Colorize edges by thickness " << std::endl;
 	}
 	void BMetaGraph::colorizeEdgesByWidth()
 	{
 		edgeOptions.colorization = ColorizationOptions::ByWidth;
-		std::cout << "Colorize edges by width " << std::endl;
+		//std::cout << "Colorize edges by width " << std::endl;
 	}
 	void BMetaGraph::colorizeEdgesByRatio()
 	{
 		edgeOptions.colorization = ColorizationOptions::ByRatio;
-		std::cout << "Colorize edges by ratio " << std::endl;
+		//std::cout << "Colorize edges by ratio " << std::endl;
 	}
 	void BMetaGraph::colorizeEdgesByComponent()
 	{
 		edgeOptions.colorization = ColorizationOptions::ByComponent;
-		std::cout << "Colorize edges by component " << std::endl;
+		//std::cout << "Colorize edges by component " << std::endl;
 	}
 	
 	void BMetaGraph::setEdgeColorFloor(float val)
@@ -137,19 +137,19 @@ namespace Roots
 
 	void BMetaGraph::showMesh(bool doShow)
 	{
-		std::cout << "display mesh set to " << doShow << std::endl;
+		//std::cout << "display mesh set to " << doShow << std::endl;
 		displayMesh = doShow;
 	}
 
 	void BMetaGraph::setMeshAlpha(float alpha)
 	{
-		std::cout << "Mesh alpha set to " << alpha << std::endl;
+		//std::cout << "Mesh alpha set to " << alpha << std::endl;
 		alphaMesh.setAlpha(alpha);
 	}
 	
 	void BMetaGraph::setMeshColor(float red, float green, float blue)
 	{
-		std::cout << "Mesh color (rgb) set to " << red << " " << green << " " << blue << std::endl;
+		//std::cout << "Mesh color (rgb) set to " << red << " " << green << " " << blue << std::endl;
 		alphaMesh.setColor(red, green, blue);
 	}
 
@@ -178,13 +178,13 @@ namespace Roots
 	void BMetaGraph::showEndpoints(bool doShow)
 	{
 		nodeOptions.showEndpoints = doShow;
-		std::cout << "Do show endpoints " << doShow << std::endl;
+		//std::cout << "Do show endpoints " << doShow << std::endl;
 	}
 
 	void BMetaGraph::showJunctions(bool doShow)
 	{
 		nodeOptions.showJunctions = doShow;
-		std::cout << "Do show junctions " << doShow << std::endl;
+		//std::cout << "Do show junctions " << doShow << std::endl;
 	}
 
 	void BMetaGraph::setEndpointScale(float scale)
@@ -239,7 +239,7 @@ namespace Roots
 			MetaV  node = *mvi.first;
 			operator[](node).currentColor = operator[](node).glThicknessColor;
 		}
-		std::cout << "Colorize nodes by thickness " << std::endl;
+		//std::cout << "Colorize nodes by thickness " << std::endl;
 	}
 	void BMetaGraph::colorizeNodesByWidth()
 	{
@@ -250,7 +250,7 @@ namespace Roots
 			MetaV  node = *mvi.first;
 			operator[](node).currentColor = operator[](node).glWidthColor;
 		}
-		std::cout << "Colorize ndes by width " << std::endl;
+		//std::cout << "Colorize ndes by width " << std::endl;
 	}
 	void BMetaGraph::colorizeNodesByDegree()
 	{
@@ -261,7 +261,7 @@ namespace Roots
 			MetaV  node = *mvi.first;
 			operator[](node).currentColor = operator[](node).glDegreeColor;
 		}
-		std::cout << "Colorize nodes by degree " << std::endl;
+		//std::cout << "Colorize nodes by degree " << std::endl;
 	}
 	void BMetaGraph::colorizeNodesByComponent()
 	{
@@ -272,7 +272,7 @@ namespace Roots
 			MetaV  node = *mvi.first;
 			operator[](node).currentColor = operator[](node).glComponentColor;
 		}
-		std::cout << "Colorize nodes by component " << std::endl;
+		//std::cout << "Colorize nodes by component " << std::endl;
 	}
 
 	void BMetaGraph::colorizeNodesByConstantColor()
@@ -284,7 +284,7 @@ namespace Roots
 			MetaV  node = *mvi.first;
 			operator[](node).currentColor = nodeOptions.constantNodeColor;
 		}
-		std::cout << "Colorize nodes by constant color" << std::endl;
+		//std::cout << "Colorize nodes by constant color" << std::endl;
 	}
 
 	void BMetaGraph::setNodeColorFloor(float val)
@@ -656,16 +656,16 @@ namespace Roots
 			}
 		}
 
-		if (showStem && stemSelected)
-		{
-			for (std::vector<MetaE>::reverse_iterator riter = StemPath.rbegin(); riter != StemPath.rend(); ++riter)
-			{
-				MetaV u_tmp = boost::source(*riter, *this);
-				MetaV v_tmp = boost::target(*riter, *this);
-				MetaE e_tmp = boost::edge(u_tmp, v_tmp, *this).first;
-				colorEdge(e_tmp, GREEN);
-			}
-		}
+		//if (showStem && stemSelected)
+		//{
+		//	for (std::vector<MetaE>::reverse_iterator riter = StemPath.rbegin(); riter != StemPath.rend(); ++riter)
+		//	{
+		//		MetaV u_tmp = boost::source(*riter, *this);
+		//		MetaV v_tmp = boost::target(*riter, *this);
+		//		MetaE e_tmp = boost::edge(u_tmp, v_tmp, *this).first;
+		//		colorEdge(e_tmp, GREEN);
+		//	}
+		//}
 
 		if (autoStemVBO.size() > 0 && showSuggestedStem)
 		{
@@ -1011,10 +1011,8 @@ namespace Roots
 			if (it != PrimaryNodes.end())
 			{
 				isSelected = true;
-				//std::cout << "nodepickrender pri node" << std::endl;
 			}
 
-			//if (!PrimaryBranchesNode.empty() && (std::find(PrimaryBranchesNode.begin(), PrimaryBranchesNode.end(), *mvi.first) != PrimaryBranchesNode.end()))
 			if (PrimaryBranchSelectionValid && (*mvi.first == PrimaryBranchSelection))
 			{
 				isSelected = true;
@@ -1039,7 +1037,6 @@ namespace Roots
 				scale *= nodeSelectionScaling;
 			}
 
-			// when degree == 2, then scale = 0
 			if (degree == 0)
 			{
 				if (!PrimaryBranchSelectionValid)
@@ -1051,7 +1048,6 @@ namespace Roots
 			else
 			{
 				drawSphere.pickDraw(nodeIdColor, node->x(), node->y(), node->z(), scale);
-				//std::cout << "test draw node 2333 " << std::endl;
 			}
 		}
 
