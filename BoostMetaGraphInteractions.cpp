@@ -637,44 +637,80 @@ namespace Roots
 
 	void BMetaGraph::selectStemStartEnd(int mouseX, int mouseY)
 	{
-		std::cout << "select stem node " << std::endl;
+		std::cout << "selectStemStartEnd" << std::endl;
 		MetaV node;
 		bool isValid = false;
 
 		node = selectNodeByRender(mouseX, mouseY, isValid);
 
+		std::cout << "node: " << node << " , isValid: " << isValid << std::endl;
+
 		if (isValid)
 		{
 			privateSelectStemStartEnd(operator[](node).mSrcVert, operator[](node).connectedComponent);
 		}
-		else
-		{
-			SkelVert vert;
-			isValid = false;
-			vert = selectVertByRender(mouseX, mouseY, isValid);
-			if (isValid)
-			{
-				metaEdgeIter mei = boost::edges(*this);
-				int connectedComponent = -1;
-				for (; mei.first != mei.second; ++mei)
-				{
-					BMetaEdge *edge = &operator[](*mei.first);
-					for (SkelVert v : edge->mVertices)
-					{
-						if (vert == v)
-						{
-							connectedComponent = edge->connectedComponent;
-							break;
-						}
-					}
-					if (connectedComponent != -1)
-					{
-						break;
-					}
-				}
+		//else
+		//{
+		//	SkelVert vert;
+		//	isValid = false;
+		//	vert = selectVertByRender(mouseX, mouseY, isValid);
+		//	if (isValid)
+		//	{
+		//		metaEdgeIter mei = boost::edges(*this);
+		//		int connectedComponent = -1;
+		//		for (; mei.first != mei.second; ++mei)
+		//		{
+		//			BMetaEdge *edge = &operator[](*mei.first);
+		//			for (SkelVert v : edge->mVertices)
+		//			{
+		//				if (vert == v)
+		//				{
+		//					connectedComponent = edge->connectedComponent;
+		//					break;
+		//				}
+		//			}
+		//			if (connectedComponent != -1)
+		//			{
+		//				break;
+		//			}
+		//		}
 
-				privateSelectStemStartEnd(vert, connectedComponent);
-			}
+		//		privateSelectStemStartEnd(vert, connectedComponent);
+		//	}
+		//}
+	}
+
+	void BMetaGraph::selectStemTopNode(int mouseX, int mouseY) {
+		std::cout << "selectStemTopNode: " << mouseX << " " << mouseY << std::endl;
+		MetaV node;
+		bool isValid = false;
+		node = selectNodeByRender(mouseX, mouseY, isValid);
+
+		std::cout << "node: " << node << " , isValid: " << isValid << std::endl;
+
+		if (isValid) {
+			selectStemStart = node;
+			operator[](selectStemStart).updateColors(nodeOptions);
+			selectStemStartValid = true;
+			std::cout << "start valid: " << selectStemStartValid << ", end valid: " << selectStemEndValid << std::endl;
+			SelectStemOperation();
+		}
+	}
+
+	void BMetaGraph::selectStemBottomNode(int mouseX, int mouseY) {
+		std::cout << "selectStemBottomNode: " << mouseX << " " << mouseY << std::endl;
+		MetaV node;
+		bool isValid = false;
+		node = selectNodeByRender(mouseX, mouseY, isValid);
+
+		std::cout << "node: " << node << " , isValid: " << isValid << std::endl;
+
+		if (isValid) {
+			selectStemEnd = node;
+			operator[](selectStemEnd).updateColors(nodeOptions);
+			selectStemEndValid = true;
+			std::cout << "start valid: " << selectStemStartValid << ", end valid: " << selectStemEndValid << std::endl;
+			SelectStemOperation();
 		}
 	}
 
@@ -1562,7 +1598,7 @@ namespace Roots
 
 	MetaV BMetaGraph::selectNodeByRender(int mouseX, int mouseY, bool &isValid)
 	{
-		std::cout << "Selecting node by render: " << mouseX << " " << mouseY << std::endl;
+		std::cout << "selectNodeByRender: " << mouseX << " " << mouseY << std::endl;
 		nodePickRender();
 		glFlush();
 		glFinish();
@@ -1828,8 +1864,8 @@ namespace Roots
 		selectNode1Valid = false;
 		selectNode2Valid = false;
 		viewNodeInfoValid = false;
-		selectStemStartValid = false;
-		selectStemEndValid = false;
+		//selectStemStartValid = false;
+		//selectStemEndValid = false;
 		PrimaryBranchSelectionValid = false;
 		selectPrimaryNodesValid = false;
 		selectSegmentPoint1Valid = false;

@@ -949,6 +949,7 @@ namespace Roots
 
 	void BMetaGraph::nodePickRender()
 	{
+		std::cout << "nodePickRender" << std::endl;
 		glDisable(GL_LIGHTING);
 		glClearColor(1.0, 1.0, 1.0, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

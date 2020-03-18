@@ -508,6 +508,8 @@ namespace Roots{
 		void selectSplitEdge(int mouseX, int mouseY);
 		void selectRemoveComponentEdge(int mouseX, int mouseY);
 		void selectStemStartEnd(int mouseX, int mouseY);
+		void selectStemTopNode(int mouseX, int mouseY);
+		void selectStemBottomNode(int mouseX, int mouseY);
 		void selectStemPrimaryNode(int mouseX, int mouseY);
 		void selectPrimaryBranches(int mouseX, int mouseY);
 		void selectSegmentPointAction(int mouseX, int mouseY);

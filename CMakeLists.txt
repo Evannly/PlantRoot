@@ -12,9 +12,9 @@ file(GLOB Roots_src
 
 ######################### MACROS #########################
 
-set(DEPENDENCIES_DIR "D:/Dependencies" CACHE PATH "Directory for all dependencies" FORCE)
-set(PROJECT_DIR "D:/Git/PlantRoot" CACHE PATH "Directory for all dependencies" FORCE)
-set(PYTHON_DIR "C:/Users/Ethan/AppData/Local/Programs/Python/Python37" CACHE PATH "Python directory" FORCE)
+set(DEPENDENCIES_DIR "C:/Users/ethan/Documents/Dependencies" CACHE PATH "Directory for all dependencies" FORCE)
+set(PROJECT_DIR "C:/Users/ethan/Documents/Git/PlantRoot" CACHE PATH "Directory for all dependencies" FORCE)
+set(PYTHON_DIR "C:/Users/ethan/AppData/Local/Programs/Python/Python37" CACHE PATH "Python directory" FORCE)
 
 ####################### END MACROS #######################
 

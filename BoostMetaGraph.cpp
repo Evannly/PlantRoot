@@ -1268,6 +1268,7 @@ namespace Roots
 
 	void BMetaGraph::loadStem(std::vector<std::string> &lines, int &lineOn)
 	{
+		std::cout << "loadStem" << std::endl;
 		std::vector<std::string> words = {};
 		words = {};
 
@@ -2359,11 +2360,11 @@ namespace Roots
 
 	void BMetaGraph::SelectStemOperation()
 	{
-		std::cout << "Select Stem Operation " << std::endl;
 		if (!selectStemStartValid || !selectStemEndValid)
 		{
 			return;
 		}
+		std::cout << "Select Stem Operation " << std::endl;
 
 		// clear currently stored stem and visualization
 		autoStemVBO.clear();
@@ -2392,6 +2393,10 @@ namespace Roots
 		{
 			auto_stem_metaEdge.push_back(boost::edge(u, v, *this).first);
 		}
+
+		for (MetaE me : auto_stem_metaEdge) {
+			std::cout << "MetaE: " << me << std::endl;
+		}
 		MetaV v_tmp;
 		for (std::vector<MetaE>::reverse_iterator riter = auto_stem_metaEdge.rbegin(); riter != auto_stem_metaEdge.rend(); ++riter)
 		{
@@ -2402,18 +2407,30 @@ namespace Roots
 			auto_stem_metaNode.push_back(u_tmp);
 		}
 		auto_stem_metaNode.push_back(v_tmp);
+		for (MetaV mv : auto_stem_metaNode) {
+			std::cout << "MetaV: " << mv << std::endl;
+		}
 		stemSelected = true;
 		selectSegmentPoint1 = selectStemStart;
 		selectSegmentPoint2 = selectStemEnd;
 		SkelVert prev = -1;
-		for (MetaE e : auto_stem_metaEdge) {
-			for (SkelVert curr : operator[](e).mVertices) {
-				if (prev != -1) {
-					autoStemVBO.push_back(prev);
-					autoStemVBO.push_back(curr);
+		MetaV mPrev = -1;
+		for (MetaV mCurr : auto_stem_metaNode) {
+			if (mPrev != -1) {
+				MetaE e = boost::edge(mPrev, mCurr, *this).first;
+				std::vector<SkelVert> subVerts = operator[](e).mVertices;
+				if (subVerts[0] != operator[](mPrev).mSrcVert) {
+					std::reverse(subVerts.begin(), subVerts.end());
 				}
-				prev = curr;
+				for (SkelVert curr : subVerts) {
+					if (prev != -1) {
+						autoStemVBO.push_back(prev);
+						autoStemVBO.push_back(curr);
+					}
+					prev = curr;
+				}
 			}
+			mPrev = mCurr;
 		}
 		for (SkelVert sv : autoStemVBO) {
 			std::cout << sv << std::endl;
