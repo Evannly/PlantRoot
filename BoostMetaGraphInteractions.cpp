@@ -1607,6 +1607,7 @@ namespace Roots
 
 		unsigned char data[3];
 		glReadPixels(mouseX, mouseY, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, data);
+		std::cout << "data: " << (unsigned int)data[0] << " " << (unsigned int)data[1] << " " << (unsigned int)data[2] << std::endl;
 		int pickedID =
 			data[0] +
 			data[1] * 256 +

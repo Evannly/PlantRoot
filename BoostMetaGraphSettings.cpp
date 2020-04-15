@@ -158,9 +158,9 @@ namespace Roots
 	NodeVisualizationOptions::NodeVisualizationOptions()
 	{
 
-		showEndpoints = true;
+		showEndpoints = false;
 		endpointScale = 0.5f;
-		showJunctions = true;
+		showJunctions = false;
 		junctionScale = 0.5f;
 
 		useConstantNodecolor = false;
@@ -656,17 +656,6 @@ namespace Roots
 			}
 		}
 
-		//if (showStem && stemSelected)
-		//{
-		//	for (std::vector<MetaE>::reverse_iterator riter = StemPath.rbegin(); riter != StemPath.rend(); ++riter)
-		//	{
-		//		MetaV u_tmp = boost::source(*riter, *this);
-		//		MetaV v_tmp = boost::target(*riter, *this);
-		//		MetaE e_tmp = boost::edge(u_tmp, v_tmp, *this).first;
-		//		colorEdge(e_tmp, GREEN);
-		//	}
-		//}
-
 		if (autoStemVBO.size() > 0 && showSuggestedStem)
 		{
 			glDisable(GL_DEPTH_TEST);
@@ -676,6 +665,7 @@ namespace Roots
 			glVertexPointer(3, GL_FLOAT, 0, &mSkeleton.glVertices[0]);
 			glColorPointer(3, GL_FLOAT, 0, testColor.data());
 
+			glLineWidth(5);
 			glDrawElements(GL_LINES, autoStemVBO.size(), GL_UNSIGNED_INT, &autoStemVBO[0]);
 
 			glEnable(GL_DEPTH_TEST);
@@ -692,6 +682,36 @@ namespace Roots
 
 			glLineWidth(edgeOptions.scale);
 			glDrawElements(GL_LINES, traceBranchVBO.size(), GL_UNSIGNED_INT, &traceBranchVBO[0]);
+
+			glEnable(GL_DEPTH_TEST);
+		}
+
+		if (showSuggestedNode && auto_node.size() > 0)
+		{
+			std::vector<GLuint> nodeRegionVBO;
+			for (int i = 0; i < auto_node.size(); ++i) {
+				for (MetaE e : std::get<2>(auto_node[i])) {
+					std::vector<SkelVert> subverts = operator[](e).mVertices;
+					SkelVert prev = -1;
+					for (SkelVert sv : subverts) {
+						if (prev != -1) {
+							nodeRegionVBO.push_back(prev);
+							nodeRegionVBO.push_back(sv);
+						}
+						prev = sv;
+					}
+				}
+			}
+
+			glDisable(GL_DEPTH_TEST);
+
+			std::vector<float> testColor(mSkeleton.glVertices.size(), 0);
+
+			glVertexPointer(3, GL_FLOAT, 0, &mSkeleton.glVertices[0]);
+			glColorPointer(3, GL_FLOAT, 0, testColor.data());
+
+			glLineWidth(8);
+			glDrawElements(GL_LINES, nodeRegionVBO.size(), GL_UNSIGNED_INT, &nodeRegionVBO[0]);
 
 			glEnable(GL_DEPTH_TEST);
 		}
@@ -782,6 +802,22 @@ namespace Roots
 		
 		GLfloat *nodeColor;
 
+		if (selectStemStartValid && showSuggestedStem && !showSuggestedNode)
+		{
+			Point3d start = (&mSkeleton)->operator[](operator[](selectStemStart).mSrcVert);
+			drawSphere.fancierDraw(WHITE, start.x(), start.y(), start.z(), 2);
+		}
+
+		if (selectStemEndValid && showSuggestedStem && !showSuggestedNode)
+		{
+			Point3d end = (&mSkeleton)->operator[](operator[](selectStemEnd).mSrcVert);
+			drawSphere.fancierDraw(WHITE, end.x(), end.y(), end.z(), 2);
+		}
+
+		if (showSuggestedNode) {
+			return;
+		}
+
 		if (showTracedBranches) {
 			if (nodeOptions.showEndpoints) {
 				for (SkelVert sv : allValidBranchingPoints) {
@@ -798,13 +834,6 @@ namespace Roots
 		{
 			BMetaNode *node = &operator[](*mvi.first);
 			int degree = boost::degree(*mvi.first, *this);
-
-			if (showClusterInput) {
-				if (std::find(cluster_input.begin(), cluster_input.end(), *mvi.first) == cluster_input.end())
-				{
-					continue;
-				}
-			}
 
 			if ((degree == 1 && !nodeOptions.showEndpoints) || (degree > 2 && !nodeOptions.showJunctions) || degree == 2)
 			{
@@ -868,15 +897,15 @@ namespace Roots
 				//nodeColor = selectedPrimaryNodeColor;
 			}
 
-			if ((*mvi.first == selectNode1 && selectNode1Valid) || (*mvi.first == selectNode2 && selectNode2Valid))
-			{
-				isSelected = true;
-			}
+			//if ((*mvi.first == selectNode1 && selectNode1Valid) || (*mvi.first == selectNode2 && selectNode2Valid))
+			//{
+			//	isSelected = true;
+			//}
 
-			if ((*mvi.first == selectStemStart && selectStemStartValid) || (*mvi.first == selectStemEnd && selectStemEndValid))
-			{
-				isSelected = true;
-			}
+			//if ((*mvi.first == selectStemStart && selectStemStartValid) || (*mvi.first == selectStemEnd && selectStemEndValid))
+			//{
+			//	isSelected = true;
+			//}
 
 			if (viewNodeInfoValid && *mvi.first == nodeToView)
 			{
@@ -1016,7 +1045,7 @@ namespace Roots
 
 			if (PrimaryBranchSelectionValid && (*mvi.first == PrimaryBranchSelection))
 			{
-				isSelected = true;
+			isSelected = true;
 			}
 
 			if ((*mvi.first == selectSegmentPoint1 && selectSegmentPoint1Valid) || (*mvi.first == selectSegmentPoint2 && selectSegmentPoint2Valid))
@@ -1057,7 +1086,6 @@ namespace Roots
 		glPopMatrix();
 	}
 
-
 	void BMetaGraph::vertPickRender()
 	{
 		glDisable(GL_LIGHTING);
@@ -1075,7 +1103,7 @@ namespace Roots
 		metaEdgeIter mei = boost::edges(*this);
 
 		GLubyte vertIdColor[3];
-		
+
 		float scale = 0.5 * (nodeOptions.endpointScale + nodeOptions.junctionScale);
 		for (; mei.first != mei.second; ++mei)
 		{
@@ -1107,42 +1135,31 @@ namespace Roots
 
 	void BMetaGraph::drawBoxes()
 	{
-		if (showBoundingBoxes)
-		{
-			if (onlyDisplaySelectedComponents)
-			{
-				BoundingBox b1 = componentBounds[selectedComponent1];
-				BoundingBox b2 = componentBounds[selectedComponent2];
-
-				std::vector<GLfloat> c1 = ColorTable::getComponentColor(selectedComponent1);
-				std::vector<GLfloat> c2 = ColorTable::getComponentColor(selectedComponent2);
-
-				b1.draw(c1, edgeOptions.scale * 2);
-				b2.draw(c2, edgeOptions.scale * 2);
-			}
-			else
-			{
-				for (int i = 0; i < componentBounds.size(); ++i)
-				{
-					std::vector<GLfloat> c = ColorTable::getComponentColor(i);
-
-					componentBounds[i].draw(c, edgeOptions.scale * 2);
-				}
-			}
-		}
-
-		//std::cout << "drawboxes" << std::endl;
 		if (showSuggestedNode && auto_node.size() > 0)
 		{
 			for (int i = 0; i < auto_node.size(); ++i)
 			{
-				std::vector<GLfloat> c = ColorTable::getComponentColor(i);
-				auto_node[i].draw(c, edgeOptions.scale * 2);
+				float x = (&operator[](std::get<0>(auto_node[i])))->p[0];
+				float y = (&operator[](std::get<0>(auto_node[i])))->p[1];
+				float z = (&operator[](std::get<0>(auto_node[i])))->p[2];
+				GLfloat color[4] = { 1, 0, 0, 1 };
+				drawSphere.fancierDraw(color, x, y, z, 2);
+
+				std::vector<MetaV> associated_nodes = std::get<1>(auto_node[i]);
+				MetaV start = associated_nodes[0];
+				MetaV end = associated_nodes[associated_nodes.size() - 1];
+				float start_x = (&operator[](start))->p[0];
+				float start_y = (&operator[](start))->p[1];
+				float start_z = (&operator[](start))->p[2];
+				float end_x = (&operator[](end))->p[0];
+				float end_y = (&operator[](end))->p[1];
+				float end_z = (&operator[](end))->p[2];
+				GLfloat start_end_color[4] = { 1, 0, 0, 1 };
+				drawSphere.fancierDraw(start_end_color, start_x, start_y, start_z, 1);
+				drawSphere.fancierDraw(start_end_color, end_x, end_y, end_z, 1);
 			}
 		}
 	}
-
-	
 
 	void BMetaGraph::draw()
 	{
@@ -1175,9 +1192,9 @@ namespace Roots
 
 		glEnable(GL_LIGHTING);
 		drawNodes();
+		drawBoxes();
 		glDisable(GL_LIGHTING);
 		drawEdges();
-		drawBoxes();
 		glGetFloatv(GL_MODELVIEW_MATRIX, modelViewTransform);
 		glGetFloatv(GL_PROJECTION_MATRIX, projectionTransform);
 		/*

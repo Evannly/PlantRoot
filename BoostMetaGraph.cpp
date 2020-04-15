@@ -622,109 +622,6 @@ namespace Roots
 		}
 	}
 
-
-	BoundingBox::BoundingBox()
-	{
-		minx = 0;
-		maxx = 0;
-		miny = 0;
-		maxy = 0;
-		minz = 0;
-		maxz = 0;
-
-		hasPoints = false;
-
-
-		for (int i = 0; i < 8; ++i)
-		{
-			corners.push_back({ 0, 0, 0 });
-		}
-	}
-
-	void BoundingBox::addPoint(float *p)
-	{
-		if (!hasPoints)
-		{
-			hasPoints = true;
-			minx = p[0];
-			maxx = p[0];
-			miny = p[1];
-			maxy = p[1];
-			minz = p[2];
-			maxz = p[2];
-		}
-		else
-		{
-			minx = std::min(minx, p[0]);
-			maxx = std::max(maxx, p[0]);
-			miny = std::min(miny, p[1]);
-			maxy = std::max(maxy, p[1]);
-			minz = std::min(minz, p[2]);
-			maxz = std::max(maxz, p[2]);
-		}
-
-		corners[0][0] = minx;
-		corners[1][0] = minx;
-		corners[2][0] = minx;
-		corners[3][0] = minx;
-		corners[4][0] = maxx;
-		corners[5][0] = maxx;
-		corners[6][0] = maxx;
-		corners[7][0] = maxx;
-
-		corners[0][1] = miny;
-		corners[1][1] = miny;
-		corners[2][1] = maxy;
-		corners[3][1] = maxy;
-		corners[4][1] = miny;
-		corners[5][1] = miny;
-		corners[6][1] = maxy;
-		corners[7][1] = maxy;
-
-		corners[0][2] = minz;
-		corners[1][2] = maxz;
-		corners[2][2] = maxz;
-		corners[3][2] = minz;
-		corners[4][2] = minz;
-		corners[5][2] = maxz;
-		corners[6][2] = maxz;
-		corners[7][2] = minz;
-	}
-
-
-	void BoundingBox::draw(std::vector<GLfloat> componentColor, float lineWidth)
-	{
-		glColor3f(componentColor[0], componentColor[1], componentColor[2]);
-		glLineWidth(lineWidth);
-		glBegin(GL_LINES);
-
-		for (int i = 0; i < 3; ++i)
-		{
-			glVertex3f(corners[i][0], corners[i][1], corners[i][2]);
-			glVertex3f(corners[i + 1][0], corners[i + 1][1], corners[i + 1][2]);
-
-			glVertex3f(corners[i + 4][0], corners[i + 4][1], corners[i + 4][2]);
-			glVertex3f(corners[i + 5][0], corners[i + 5][1], corners[i + 5][2]);
-		}
-
-		int i = 3;
-
-		glVertex3f(corners[i][0], corners[i][1], corners[i][2]);
-		glVertex3f(corners[0][0], corners[0][1], corners[0][2]);
-
-		glVertex3f(corners[i + 4][0], corners[i + 4][1], corners[i + 4][2]);
-		glVertex3f(corners[i + 1][0], corners[i + 1][1], corners[i + 1][2]);
-
-		for (int i = 0; i < 4; ++i)
-		{
-			glVertex3f(corners[i][0], corners[i][1], corners[i][2]);
-			glVertex3f(corners[i + 4][0], corners[i + 4][1], corners[i + 4][2]);
-		}
-
-
-		glEnd();
-	}
-
 	MetaFace::MetaFace(std::set<FaceI> memberFaces, std::vector<Face>& skelFaces)
 	{
 		faceIndices = memberFaces;
@@ -847,7 +744,7 @@ namespace Roots
 		numComponents = -1;
 		mDuplicateEdgeMap = std::map<MetaE, MetaE>();
 		mDuplicateNodeMap = std::map<MetaV, MetaV>();
-		componentBounds = {};
+		//componentBounds = {};
 		isLoaded = false;
 
 		displayFaces = true;
@@ -913,6 +810,7 @@ namespace Roots
 		std::cout << "Called: InitializeTraitParameters" << std::endl;
 		showSuggestedStem = false;
 		showStem = false;
+		showTracedBranches = false;
 		tracePrimaryBranches = false;
 		selectStemStartValid = false;
 		selectStemEndValid = false;
@@ -1888,15 +1786,15 @@ namespace Roots
 		MinMaxStruct::maxComponent = numComponents - 1;
 		std::cout << "updated node component" << std::endl;
 
-		componentBounds = std::vector<BoundingBox>(numComponents, BoundingBox());
+		//componentBounds = std::vector<BoundingBox>(numComponents, BoundingBox());
 
-		metaVertIter mvi = boost::vertices(*this);
-		for (; mvi.first != mvi.second; ++mvi)
-		{
-			BMetaNode *node = &operator[](*mvi.first);
-			componentBounds[node->connectedComponent].addPoint(node->p);
-		}
-		std::cout << "===== Components found =====" << std::endl;
+		//metaVertIter mvi = boost::vertices(*this);
+		//for (; mvi.first != mvi.second; ++mvi)
+		//{
+		//	BMetaNode *node = &operator[](*mvi.first);
+		//	componentBounds[node->connectedComponent].addPoint(node->p);
+		//}
+		//std::cout << "===== Components found =====" << std::endl;
 	}
 
 	boost::python::list BMetaGraph::getComponentSizes()
@@ -2821,134 +2719,91 @@ namespace Roots
 			MetaE e = boost::edge(src, dst, *this).first;
 			auto_stem_metaEdge.push_back(e);
 		}
+
+		selectStemStart = auto_stem_metaNode[0];
+		selectStemEnd = auto_stem_metaNode[auto_stem_metaNode.size() - 1];
+		selectStemStartValid = true;
+		selectStemEndValid = true;
 	}
 
 	// input param val - look distance for each vertex
 	void BMetaGraph::FindPrimaryNodeOperation(float look_distance, float kernel_bandwidth)
 	{
+		std::vector<MetaV> cluster_input;
+		std::vector<float> cluster_input_position;
+		std::deque<SkelVert> sequence;
+		primary_branches.clear();
+		allBranchingPointsWithParent.clear();
+		allValidBranchingPoints.clear();
+		branchingPointToStemNodeWithDistanceMap.clear();
+		auto_node.clear();
+
 		std::cout << "Find primary node" << std::endl;
-		//if (auto_stem.empty() && StemPath.empty())
+
 		if (auto_stem_metaNode.empty())
 		{
 			std::cout << "No stem available" << std::endl;
 			return;
 		}
-		cluster_input.clear();
 
-		//// find a list of meta vertices on the stem. Record their position
-		std::vector<float> cluster_input_position;
+		for (MetaV v : auto_stem_metaNode) {
+			sequence.push_back(operator[](v).mSrcVert);
+		}
 
-		//if (!StemPath.empty()) // User has selected a stem
-		//{
-		//	std::cout << "User stem found" << std::endl;
-		//	float metaDist = 0; // Store accumulative distance
+		// Record the position of each metaNode
+		std::vector<float> auto_stem_metaDist;
+		float acc = 0.0f;
+		auto_stem_metaDist.push_back(acc);
+		for (size_t i = 1; i < auto_stem_metaNode.size(); ++i) {
+			acc += operator[](boost::edge(auto_stem_metaNode[i - 1], auto_stem_metaNode[i], *this).first).mLength;
+			auto_stem_metaDist.push_back(acc);
+		}
 
-		//	// Exclude the short branches which are recognized as noises
-		//	for (size_t i = 0; i < StemPath_node.size(); ++i)
-		//	{
-		//		bool isValidPrimaryNode = false;
-		//		typename graph_traits<BoostMetaGraph>::out_edge_iterator ei, ei_end;
-		//		for (boost::tie(ei, ei_end) = out_edges(StemPath_node[i], *this); ei != ei_end; ++ei) {
-		//			MetaV target = boost::target(*ei, *this);
-		//			MetaV prev = (i == 0) ? -1 : StemPath_node[i - 1];
-		//			MetaV next = (i == StemPath_node.size() - 1) ? -1 : StemPath_node[i + 1];
-		//			if (target != prev && target != next) {
-		//				std::cout << "Node " << StemPath_node[i] << " has a side branch to " << target;
-		//				std::pair<MetaE, bool> edge_pair = boost::edge(StemPath_node[i], target, *this);
-		//				float distance = operator[](edge_pair.first).mLength;
-		//				if (branchLongerThanThreshold(StemPath_node[i], target, 50 - distance)) {
-		//					std::cout << " with max length larger than 50";
-		//					isValidPrimaryNode = true;
-		//				}
-		//				std::cout << std::endl;
-		//			}
-		//		}
-		//		if (i == 0) {
-		//			if (isValidPrimaryNode) {
-		//				cluster_input_position.push_back(0);
-		//				cluster_input.push_back(StemPath_node[i]);
-		//			}
-		//		}
-		//		else {
-		//			metaDist += operator[](StemPath[i - 1]).mLength;
-		//			if (isValidPrimaryNode) {
-		//				cluster_input_position.push_back(metaDist);
-		//				cluster_input.push_back(StemPath_node[i]);
-		//			}
-		//		}
-		//	}
-		//}
-
-		//else // User hasn't selected a stem
-		if(1)
+		// Exclude short branches which are recognized as noises
+		for (size_t i = 0; i < auto_stem_metaNode.size(); ++i)
 		{
-			std::cout << "Auto stem found " << std::endl;
-			std::deque<SkelVert> sequence;
-
-			for (MetaE e : auto_stem_metaEdge) {
-				if (sequence.size() != 0) {
-					sequence.pop_back();
-				}
-				for (SkelVert se : operator[](e).mVertices) {
-					sequence.push_back(se);
-				}
-			}
-
-			// Record the position of each metaNode
-			std::vector<float> auto_stem_metaDist;
-			float metaDist = 0.0f;
-			auto_stem_metaDist.push_back(metaDist);
-			for (size_t i = 1; i < auto_stem_metaNode.size(); ++i) {
-				metaDist += operator[](boost::edge(auto_stem_metaNode[i - 1], auto_stem_metaNode[i], *this).first).mLength;
-				auto_stem_metaDist.push_back(metaDist);
-			}
-
-			// Exclude short branches which are recognized as noises
-			for (size_t i = 0; i < auto_stem_metaNode.size(); ++i)
-			{
-				int validBranchesOnNode = 0;
-				typename graph_traits<BoostMetaGraph>::out_edge_iterator ei, ei_end;
-				for (boost::tie(ei, ei_end) = out_edges(auto_stem_metaNode[i], *this); ei != ei_end; ++ei) {
-					MetaV target = boost::target(*ei, *this);
-					MetaV prev = (i == 0) ? -1 : auto_stem_metaNode[i - 1];
-					MetaV next = (i == auto_stem_metaNode.size() - 1) ? -1 : auto_stem_metaNode[i + 1];
-					if (target != prev && target != next) {
-						std::cout << "Node " << auto_stem_metaNode[i] << " has a side branch to " << target;
-						if (auto_stem_metaNode[i] != target) {
-							std::set<MetaV> visited;
-							if (branchExceedsStemBoundary(&visited, sequence, auto_stem_metaNode[i], target, 2.0f)) {
-								std::cout << " that exceeds the stem boundary";
-								validBranchesOnNode++;
-							}
-							std::cout << std::endl;
+			int validBranchesOnNode = 0;
+			typename graph_traits<BoostMetaGraph>::out_edge_iterator ei, ei_end;
+			for (boost::tie(ei, ei_end) = out_edges(auto_stem_metaNode[i], *this); ei != ei_end; ++ei) {
+				MetaV target = boost::target(*ei, *this);
+				MetaV prev = (i == 0) ? -1 : auto_stem_metaNode[i - 1];
+				MetaV next = (i == auto_stem_metaNode.size() - 1) ? -1 : auto_stem_metaNode[i + 1];
+				if (target != prev && target != next) {
+					std::cout << "Node " << auto_stem_metaNode[i] << " has a side branch to " << target;
+					if (auto_stem_metaNode[i] != target) {
+						std::set<MetaV> visited;
+						if (branchExceedsStemBoundary(&visited, sequence, auto_stem_metaNode[i], target, 2.0f)) {
+							std::cout << " that exceeds the stem boundary";
+							validBranchesOnNode++;
 						}
+						std::cout << std::endl;
 					}
 				}
-
-				if (validBranchesOnNode > 0) {
-					// Find the branching points
-					findBranchingPointsWithParent(auto_stem_metaNode[i], sequence, 1.0f);
-				}
-
-				// Put the position values into the input vector, each repeating j times 
-				// with j being the number of valid branches on the node
-				for (int j = 0; j < validBranchesOnNode; ++j) {
-					cluster_input_position.push_back(auto_stem_metaDist[i]);
-					cluster_input.push_back(auto_stem_metaNode[i]);
-				}
 			}
 
-			// Trace branches from branching points
-			std::set<SkelVert> pathTaken;
-			for (std::map<SkelVert, SkelVert>::iterator it = allBranchingPointsWithParent.begin(); it != allBranchingPointsWithParent.end(); ++it) {
-				std::set<SkelVert> visitedWhenTracingBranchesUsingLongestPath;
-				SkelVert parent = it->second;
-				SkelVert branchingPoint = it->first;
-				visitedWhenTracingBranchesUsingLongestPath.insert(parent);
-				std::map<SkelVert, SkelVert> childToParentMap;
-				std::map<SkelVert, float> pathLength;
-				traceBranchUsingLongestPath(branchingPoint, sequence, &pathTaken, visitedWhenTracingBranchesUsingLongestPath, 100.0f, 50.0f, 0.6f, 10);
+			if (validBranchesOnNode > 0) {
+				// Find the branching points
+				findBranchingPointsWithParent(auto_stem_metaNode[i], sequence, 1.0f);
 			}
+
+			// Put the position values into the input vector, each repeating j times 
+			// with j being the number of valid branches on the node
+			for (int j = 0; j < validBranchesOnNode; ++j) {
+				cluster_input_position.push_back(auto_stem_metaDist[i]);
+				cluster_input.push_back(auto_stem_metaNode[i]);
+			}
+		}
+
+		// Trace branches from branching points
+		std::set<SkelVert> pathTaken;
+		for (std::map<SkelVert, SkelVert>::iterator it = allBranchingPointsWithParent.begin(); it != allBranchingPointsWithParent.end(); ++it) {
+			std::set<SkelVert> visitedWhenTracingBranchesUsingLongestPath;
+			SkelVert parent = it->second;
+			SkelVert branchingPoint = it->first;
+			visitedWhenTracingBranchesUsingLongestPath.insert(parent);
+			std::map<SkelVert, SkelVert> childToParentMap;
+			std::map<SkelVert, float> pathLength;
+			traceBranchUsingLongestPath(branchingPoint, sequence, &pathTaken, visitedWhenTracingBranchesUsingLongestPath, 100.0f, 50.0f, 0.6f, 10);
 		}
 
 		// Mean shift clustering
@@ -3005,6 +2860,42 @@ namespace Roots
 			++it;
 		}
 
+		std::cout << "cluster_input.size() = " << cluster_input.size() << " cluster_input_position.size() = " << cluster_input_position.size() << std::endl;
+		std::cout << "cluster.size() = " << cluster.size() << std::endl << "cluster: " << std::endl;
+
+		for (float f : cluster) {
+			std::cout << f << std::endl;
+		}
+
+		std::map<float, std::vector<MetaV>> cluster_position_to_associated_nodes_map;
+		std::map<float, std::vector<MetaE>> cluster_position_to_associated_edges_map;
+
+		MetaV prev = -1;
+		for (size_t i = 0; i < cluster.size(); ++i) {
+			MetaV v = cluster_input[i];
+			if (v != prev) {
+				cluster_position_to_associated_nodes_map[cluster[i]].push_back(v);
+			}
+			prev = v;
+		}
+		for (std::pair<float, std::vector<MetaV>> entry : cluster_position_to_associated_nodes_map) {
+			std::vector<MetaV> nodes = entry.second;
+			MetaV start = nodes[0];
+			MetaV end = nodes[nodes.size() - 1];
+			bool recording = false;
+			for (size_t i = 0; i < auto_stem_metaNode.size(); ++i) {
+				if (recording) {
+					cluster_position_to_associated_edges_map[entry.first].push_back(boost::edge(auto_stem_metaNode[i - 1], auto_stem_metaNode[i], *this).first);
+				}
+				if (auto_stem_metaNode[i] == start) {
+					recording = true;
+				}
+				if (auto_stem_metaNode[i] == end) {
+					recording = false;
+				}
+			}
+		}
+
 		// Delete the clusters that associate to only two or less vertices
 		std::map<float, int> count;
 		for (float f : cluster) ++count[f];
@@ -3020,6 +2911,7 @@ namespace Roots
 		cluster.erase(std::unique(cluster.begin(), cluster.end()), cluster.end());
 		std::cout << std::endl << "cluster size: " << cluster.size() << std::endl;
 		std::cout << "cluster input size: " << cluster_input_position.size() << std::endl;
+
 		for (int i = 0; i < cluster.size(); ++i)
 		{
 			int branchCount = 0;
@@ -3046,22 +2938,20 @@ namespace Roots
 				++it;
 			}
 
+			std::cout << "Center Node: " << cluster_input[node_index] << std::endl;
 			std::cout << "Branch Count: " << branchCount << std::endl;
+			std::cout << "Associated MetaV: " << std::endl;
+			for (MetaV v : cluster_position_to_associated_nodes_map[cluster[i]]) {
+				std::cout << v << std::endl;
+			}
+			std::cout << "Associated MetaE: " << std::endl;
+			for (MetaE e : cluster_position_to_associated_edges_map[cluster[i]]) {
+				std::cout << e << std::endl;
+			}
 
 			// Find node according to index
-			BoundingBox b;
-			BMetaNode *node = &operator[](cluster_input[node_index]);
-
-			float temp[3];
-			float temp2[3];
-			for (int j = 0; j < 3; j++)
-			{
-				temp[j] = node->p[j] + 2;
-				temp2[j] = node->p[j] - 2;
-			}
-			b.addPoint(temp);
-			b.addPoint(temp2);
-			auto_node.push_back(b);
+			MetaV node = cluster_input[node_index];
+			auto_node.push_back(std::tuple<MetaV, std::vector<MetaV>, std::vector<MetaE>>(node, cluster_position_to_associated_nodes_map[cluster[i]], cluster_position_to_associated_edges_map[cluster[i]]));
 		}
 		std::cout << "auto_node size " << auto_node.size() << std::endl;
 

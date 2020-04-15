@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <map>
+#include <GL/glut.h>
 
 #include "Sphere.h"
 #include "Mesh.h"
@@ -190,18 +191,6 @@ namespace Roots
 		void updateGraphColors(std::vector<std::vector<GLfloat>> &vertexColors);
 	};
 
-	struct BoundingBox
-	{
-		std::vector<std::vector<float>> corners;
-		bool hasPoints;
-		float minx, maxx, miny, maxy, minz, maxz;
-
-		BoundingBox();
-
-		void addPoint(float *p);
-		void draw(std::vector<GLfloat> componentColor, float lineWidth);
-	};
-
 	struct MetaFace
 	{
 		std::set<int> faceIndices;
@@ -242,7 +231,7 @@ namespace Roots{
 		std::vector<int> mComponentMap;
 		std::vector<float> mComponentSizeMap;
 		std::vector<MetaE> mMinimumSpanningTree;
-		std::vector<BoundingBox> componentBounds;
+		//std::vector<BoundingBox> componentBounds;
 		std::vector<MetaFace> faces;
 		int numComponents;
 		
@@ -336,9 +325,8 @@ namespace Roots{
 		
 		bool showSuggestedNode;
 		bool showClusterInput;
-		std::vector<BoundingBox> auto_node;
-		std::vector<MetaV> cluster_input;
 		bool showPrimaryNodes;
+		std::vector<std::tuple<MetaV, std::vector<MetaV>, std::vector<MetaE>>> auto_node;
 		std::vector< std::pair<int, MetaV> > PrimaryNodes;
 		bool selectPrimaryNodesValid;
 		struct PrimaryNodesPredecessorsStruct
