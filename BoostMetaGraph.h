@@ -31,9 +31,11 @@ enum OperationMode
 {
 	None = 0,
 	Connection = 1,
-	AddNodes = 2,
+	EditWhorl = 2,
 	Break = 3,
-	Split = 4
+	Split = 4,
+	SelectStemTop = 5,
+	SelectStemBottom = 6
 };
 
 
@@ -244,6 +246,8 @@ namespace Roots{
 
 
 		//visualization and drawing options
+		bool prevShowEndpoints;
+		bool prevShowJunctions;
 		bool displayFaces;
 		EdgeVisualizationOptions edgeOptions;
 		NodeVisualizationOptions nodeOptions;
@@ -323,9 +327,12 @@ namespace Roots{
 		bool stemSelected;
 		float rootClipPlaneNormal[2][4] = {0};
 		
-		bool showSuggestedNode;
+		bool showWhorl;
 		bool showClusterInput;
 		bool showPrimaryNodes;
+		bool selectWhorlValid;
+		MetaV selectedWhorl;
+		std::set<MetaV> whorls;
 		std::vector<std::tuple<MetaV, std::vector<MetaV>, std::vector<MetaE>>> auto_node;
 		std::vector< std::pair<int, MetaV> > PrimaryNodes;
 		bool selectPrimaryNodesValid;
@@ -437,8 +444,8 @@ namespace Roots{
 		void setMeshColor(float red, float green, float blue);
 
 		void assignNodeHeatMap(boost::python::list heatmap);
-		void showEndpoints(bool doShow);
-		void showJunctions(bool doShow);
+		void showHideEndpoints();
+		void showHideJunctions();
 		void setEndpointScale(float scale);
 		void setJunctionScale(float scale);
 		void setConstantNodeColor(float r, float g, float b);
@@ -455,10 +462,10 @@ namespace Roots{
 		void setComponent2(int component);
 		void setShowBoundingBoxes(bool doShow);
 
-		void setDisplayStem(bool doShowStem);
-		void setDisplaySuggestedStem(bool doShow);
-		void setDisplayPrimaryNodes(bool doShowPriamryStem);
-		void setDisplaySuggestedNode(bool doShow);
+		//void setDisplayStem(bool doShowStem);
+		void showHideStem();
+		//void setDisplayPrimaryNodes(bool doShowPriamryStem);
+		void showHideWhorl();
 		void setDisplayClusterInput(bool doShow);
 		void setDisplayTracingPrimaryBranches(bool doTrace);
 		void setDisplayTracingTree(bool doShow);
@@ -475,7 +482,7 @@ namespace Roots{
 		void drawNodes();
 		void nodePickRender();
 		void vertPickRender();
-		void drawBoxes();
+		void drawWhorls();
 		void draw();
 
 		void startRotation(int mx, int my);
@@ -491,13 +498,16 @@ namespace Roots{
 
 		//vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvInteractionsvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv//
 	public:
+		int getMode();
+		void setMode(int mode);
 		void selectConnectionNode(int mouseX, int mouseY);
 		void selectBreakEdge(int mouseX, int mouseY);
 		void selectSplitEdge(int mouseX, int mouseY);
 		void selectRemoveComponentEdge(int mouseX, int mouseY);
-		void selectStemStartEnd(int mouseX, int mouseY);
 		void selectStemTopNode(int mouseX, int mouseY);
 		void selectStemBottomNode(int mouseX, int mouseY);
+		void selectWhorl(int mouseX, int mouseY);
+		void deleteWhorl();
 		void selectStemPrimaryNode(int mouseX, int mouseY);
 		void selectPrimaryBranches(int mouseX, int mouseY);
 		void selectSegmentPointAction(int mouseX, int mouseY);
@@ -522,7 +532,6 @@ namespace Roots{
 		SkelVert selectVertByRender(int mouseX, int mouseY, bool &isValid);
 
 		void privateSelectConnectionNode(SkelVert nodeVert, int selectComponent);
-		void privateSelectStemStartEnd(SkelVert nodeVert, int selectComponent);
 		void privateSelectSegmentPointAction(SkelVert nodeVert, int selectComponent);
 		void privateSelectPrimaryBranches(MetaV target, int selectComponent);
 		std::vector<MetaE> privateShortestPath(MetaV source, MetaV target);

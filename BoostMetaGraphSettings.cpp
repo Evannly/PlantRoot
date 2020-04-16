@@ -175,16 +175,16 @@ namespace Roots
 		heatmap = { {1.0, 0.0, 0.0, 1.0},  {1.0, 0.0, 0.0, 1.0} };
 	}
 
-	void BMetaGraph::showEndpoints(bool doShow)
+	void BMetaGraph::showHideEndpoints()
 	{
-		nodeOptions.showEndpoints = doShow;
-		//std::cout << "Do show endpoints " << doShow << std::endl;
+		nodeOptions.showEndpoints = !nodeOptions.showEndpoints;
+		std::cout << "show endpoints: " << nodeOptions.showEndpoints << std::endl;
 	}
 
-	void BMetaGraph::showJunctions(bool doShow)
+	void BMetaGraph::showHideJunctions()
 	{
-		nodeOptions.showJunctions = doShow;
-		//std::cout << "Do show junctions " << doShow << std::endl;
+		nodeOptions.showJunctions = !nodeOptions.showJunctions;
+		std::cout << "show junctions " << nodeOptions.showJunctions << std::endl;
 	}
 
 	void BMetaGraph::setEndpointScale(float scale)
@@ -352,27 +352,29 @@ namespace Roots
 	}
 
 	/* stem options */
-	void BMetaGraph::setDisplayStem(bool doShowStem)
-	{
-		showStem = doShowStem;
-		buildEdgeVBOs();
-	}
+	//void BMetaGraph::setDisplayStem(bool doShowStem)
+	//{
+	//	showStem = doShowStem;
+	//	buildEdgeVBOs();
+	//}
 	
-	void BMetaGraph::setDisplaySuggestedStem(bool doShow)
+	void BMetaGraph::showHideStem()
 	{
-		showSuggestedStem = doShow;
+		showSuggestedStem = !showSuggestedStem;
 		buildEdgeVBOs();
 	}
 
-	void BMetaGraph::setDisplayPrimaryNodes(bool doShowPriamryNodes)
-	{
-		showPrimaryNodes = doShowPriamryNodes;
-		buildEdgeVBOs();
-	}
+	//void BMetaGraph::setDisplayPrimaryNodes(bool doShowPriamryNodes)
+	//{
+	//	showPrimaryNodes = doShowPriamryNodes;
+	//	buildEdgeVBOs();
+	//}
 
-	void BMetaGraph::setDisplaySuggestedNode(bool doShow)
+	void BMetaGraph::showHideWhorl()
 	{
-		showSuggestedNode = doShow;
+		showWhorl = !showWhorl;
+		if (showWhorl && auto_node.size() != 0) mode = OperationMode::EditWhorl;
+		else mode = OperationMode::None;
 		buildEdgeVBOs();
 	}
 
@@ -686,7 +688,7 @@ namespace Roots
 			glEnable(GL_DEPTH_TEST);
 		}
 
-		if (showSuggestedNode && auto_node.size() > 0)
+		if (showWhorl && auto_node.size() > 0)
 		{
 			std::vector<GLuint> nodeRegionVBO;
 			for (int i = 0; i < auto_node.size(); ++i) {
@@ -802,21 +804,21 @@ namespace Roots
 		
 		GLfloat *nodeColor;
 
-		if (selectStemStartValid && showSuggestedStem && !showSuggestedNode)
+		if (selectStemStartValid && showSuggestedStem && !showWhorl)
 		{
 			Point3d start = (&mSkeleton)->operator[](operator[](selectStemStart).mSrcVert);
 			drawSphere.fancierDraw(WHITE, start.x(), start.y(), start.z(), 2);
 		}
 
-		if (selectStemEndValid && showSuggestedStem && !showSuggestedNode)
+		if (selectStemEndValid && showSuggestedStem && !showWhorl)
 		{
 			Point3d end = (&mSkeleton)->operator[](operator[](selectStemEnd).mSrcVert);
 			drawSphere.fancierDraw(WHITE, end.x(), end.y(), end.z(), 2);
 		}
 
-		if (showSuggestedNode) {
-			return;
-		}
+		//if (showWhorl) {
+		//	return;
+		//}
 
 		if (showTracedBranches) {
 			if (nodeOptions.showEndpoints) {
@@ -838,6 +840,7 @@ namespace Roots
 			if ((degree == 1 && !nodeOptions.showEndpoints) || (degree > 2 && !nodeOptions.showJunctions) || degree == 2)
 			{
 				continue;
+
 			}
 
 			if (showTraitsOnly)
@@ -897,53 +900,43 @@ namespace Roots
 				//nodeColor = selectedPrimaryNodeColor;
 			}
 
-			//if ((*mvi.first == selectNode1 && selectNode1Valid) || (*mvi.first == selectNode2 && selectNode2Valid))
-			//{
-			//	isSelected = true;
-			//}
-
-			//if ((*mvi.first == selectStemStart && selectStemStartValid) || (*mvi.first == selectStemEnd && selectStemEndValid))
-			//{
-			//	isSelected = true;
-			//}
-
 			if (viewNodeInfoValid && *mvi.first == nodeToView)
 			{
 				isSelected = true;
 			}
 
-			// primary nodes setting
-			MetaV temp = *mvi.first;
-			auto it = std::find_if(PrimaryNodes.begin(), PrimaryNodes.end(), [&temp](const std::pair<int, MetaV>& element) { return element.second == temp; });
-			if ( it != PrimaryNodes.end() )
-			{
-				//isSelected = true; // all primary nodes : show bigger
-				if (isRandomColorizePrimaryNodes)
-				{
-					int index = std::distance(PrimaryNodes.begin(), it);
-					index = index % randomColorLoopUpTable.size();
-					GLfloat temp[4];
-					for (int i = 0; i < 4; ++i)
-					{
-						temp[i] = randomColorLoopUpTable[index][i];
-						//temp[i] = ColorTable::getComponentColor(index)[i];
-					}
-					nodeColor = temp;
-				}
-				//if (selectPrimaryNodesValid)//&& (temp == PrimaryNodes.back().second))
-				if (showPrimaryNodes)
-				{
-					isSelected = true;
-				}
-			}
+			//// primary nodes setting
+			//MetaV temp = *mvi.first;
+			//auto it = std::find_if(PrimaryNodes.begin(), PrimaryNodes.end(), [&temp](const std::pair<int, MetaV>& element) { return element.second == temp; });
+			//if ( it != PrimaryNodes.end() )
+			//{
+			//	//isSelected = true; // all primary nodes : show bigger
+			//	if (isRandomColorizePrimaryNodes)
+			//	{
+			//		int index = std::distance(PrimaryNodes.begin(), it);
+			//		index = index % randomColorLoopUpTable.size();
+			//		GLfloat temp[4];
+			//		for (int i = 0; i < 4; ++i)
+			//		{
+			//			temp[i] = randomColorLoopUpTable[index][i];
+			//			//temp[i] = ColorTable::getComponentColor(index)[i];
+			//		}
+			//		nodeColor = temp;
+			//	}
+			//	//if (selectPrimaryNodesValid)//&& (temp == PrimaryNodes.back().second))
+			//	if (showPrimaryNodes)
+			//	{
+			//		isSelected = true;
+			//	}
+			//}
 
-			if ((CurrentPrimaryNode != -1) && (it != PrimaryNodes.end()))
-			{
-				if (*mvi.first == PrimaryNodes[CurrentPrimaryNode].second)
-				{
-					isSelected = true;
-				}
-			}
+			//if ((CurrentPrimaryNode != -1) && (it != PrimaryNodes.end()))
+			//{
+			//	if (*mvi.first == PrimaryNodes[CurrentPrimaryNode].second)
+			//	{
+			//		isSelected = true;
+			//	}
+			//}
 
 			if ((*mvi.first == selectSegmentPoint1 && selectSegmentPoint1Valid) || (*mvi.first == selectSegmentPoint2 && selectSegmentPoint2Valid))
 			{
@@ -1133,9 +1126,9 @@ namespace Roots
 		glPopMatrix();
 	}
 
-	void BMetaGraph::drawBoxes()
+	void BMetaGraph::drawWhorls()
 	{
-		if (showSuggestedNode && auto_node.size() > 0)
+		if (showWhorl && auto_node.size() > 0)
 		{
 			for (int i = 0; i < auto_node.size(); ++i)
 			{
@@ -1143,6 +1136,10 @@ namespace Roots
 				float y = (&operator[](std::get<0>(auto_node[i])))->p[1];
 				float z = (&operator[](std::get<0>(auto_node[i])))->p[2];
 				GLfloat color[4] = { 1, 0, 0, 1 };
+				if (std::get<0>(auto_node[i]) == selectedWhorl) {
+					color[2] = 1;
+					color[3] = 1;
+				}
 				drawSphere.fancierDraw(color, x, y, z, 2);
 
 				std::vector<MetaV> associated_nodes = std::get<1>(auto_node[i]);
@@ -1192,7 +1189,7 @@ namespace Roots
 
 		glEnable(GL_LIGHTING);
 		drawNodes();
-		drawBoxes();
+		drawWhorls();
 		glDisable(GL_LIGHTING);
 		drawEdges();
 		glGetFloatv(GL_MODELVIEW_MATRIX, modelViewTransform);

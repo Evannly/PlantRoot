@@ -748,6 +748,8 @@ namespace Roots
 		isLoaded = false;
 
 		displayFaces = true;
+		prevShowEndpoints = false;
+		prevShowJunctions = false;
 		edgeOptions = EdgeVisualizationOptions();
 		nodeOptions = NodeVisualizationOptions();
 		mode = OperationMode::None;
@@ -821,8 +823,11 @@ namespace Roots
 		stemSelected = false;
 		auto_stem = {};
 
-		showSuggestedNode = false;
+		showWhorl = false;
 		showClusterInput = false;
+		selectWhorlValid = false;
+		selectedWhorl = 99999999;
+		whorls = {};
 		auto_node = {};
 		showPrimaryNodes = false;
 		PrimaryNodes = {};
@@ -2269,6 +2274,10 @@ namespace Roots
 		auto_stem.clear();
 		auto_stem_metaNode.clear();
 		auto_stem_metaEdge.clear();
+		whorls.clear();
+		auto_node.clear();
+		showWhorl = false;
+		mode = OperationMode::None;
 
 		//StemPath.clear();
 		StemPath_node.clear();
@@ -2291,23 +2300,15 @@ namespace Roots
 		{
 			auto_stem_metaEdge.push_back(boost::edge(u, v, *this).first);
 		}
-
-		for (MetaE me : auto_stem_metaEdge) {
-			std::cout << "MetaE: " << me << std::endl;
-		}
 		MetaV v_tmp;
 		for (std::vector<MetaE>::reverse_iterator riter = auto_stem_metaEdge.rbegin(); riter != auto_stem_metaEdge.rend(); ++riter)
 		{
 			MetaV u_tmp = boost::source(*riter, *this);
 			v_tmp = boost::target(*riter, *this);
 			MetaE e_tmp = boost::edge(u_tmp, v_tmp, *this).first;
-			std::cout << "  " << mSkeleton[operator[](u_tmp).mSrcVert].id << " -> " << mSkeleton[operator[](v_tmp).mSrcVert].id << "    (length: " << operator[](e_tmp).mLength << ")" << std::endl;
 			auto_stem_metaNode.push_back(u_tmp);
 		}
 		auto_stem_metaNode.push_back(v_tmp);
-		for (MetaV mv : auto_stem_metaNode) {
-			std::cout << "MetaV: " << mv << std::endl;
-		}
 		stemSelected = true;
 		selectSegmentPoint1 = selectStemStart;
 		selectSegmentPoint2 = selectStemEnd;
@@ -2330,9 +2331,6 @@ namespace Roots
 			}
 			mPrev = mCurr;
 		}
-		for (SkelVert sv : autoStemVBO) {
-			std::cout << sv << std::endl;
-		}
 		unselectAll();
 		return;
 	}
@@ -2346,6 +2344,10 @@ namespace Roots
 		auto_stem.clear();
 		auto_stem_metaNode.clear();
 		auto_stem_metaEdge.clear();
+		whorls.clear();
+		auto_node.clear();
+		showWhorl = false;
+		mode = OperationMode::None;
 
 		// find out vertices with highest width
 		float maxWidth = 0.0;
@@ -2736,6 +2738,7 @@ namespace Roots
 		allBranchingPointsWithParent.clear();
 		allValidBranchingPoints.clear();
 		branchingPointToStemNodeWithDistanceMap.clear();
+		whorls.clear();
 		auto_node.clear();
 
 		std::cout << "Find primary node" << std::endl;
@@ -2951,9 +2954,14 @@ namespace Roots
 
 			// Find node according to index
 			MetaV node = cluster_input[node_index];
+			whorls.insert(node);
 			auto_node.push_back(std::tuple<MetaV, std::vector<MetaV>, std::vector<MetaE>>(node, cluster_position_to_associated_nodes_map[cluster[i]], cluster_position_to_associated_edges_map[cluster[i]]));
 		}
 		std::cout << "auto_node size " << auto_node.size() << std::endl;
+		if (auto_node.size() != 0) {
+			showWhorl = true;
+			mode = OperationMode::EditWhorl;
+		}
 
 		return;
 	}
