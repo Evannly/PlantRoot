@@ -764,9 +764,22 @@ namespace Roots
 		stemVBO = {};
 
 		autoStemVBO = {};
+		traceBranchVBO = {};
+
+		// 1. whorl edges on stem
+		// 2. non whorl edges on stem
+		// 3. branches associated with current selected whorl
+		// 4. branches not associated with current selected whorl
+		// 5. other edges (not stem, not traced branches)
+
+		whorlEdgeStemVBO = {};
+		nonWhorlEdgeStemVBO = {};
+		selectedWhorlBranchesVBO = {};
+		nonSelectedWhorlBranchesVBO = {};
+		nonStemNonBranchesVBO = {};
+
 		testVBO = {};
 
-		traceBranchVBO = {};
 
 		for (int i = 0; i < 3; ++i)
 		{
@@ -1449,6 +1462,8 @@ namespace Roots
 
 	void BMetaGraph::buildEdgeVBOs()
 	{
+		std::cout << "buildEdgeVBOs" << std::endl;
+
 		selectionVBO.clear();
 		bridgeVBO.clear();
 		nonBridgeVBO.clear();
@@ -1458,95 +1473,144 @@ namespace Roots
 		TraitsNodes.clear();
 		vertexColors.clear();
 		vertexColors = { {}, {}, {}, {} };
-		metaEdgeIter mei = boost::edges(*this);
-		for (; mei.first != mei.second; ++mei)
-		{
-			BMetaEdge *edge = &operator[](*mei.first);
-			edge->updateGraphColors(vertexColors);
-			if (onlyDisplaySelectedComponents)
-			{
-				if (edge->connectedComponent != selectedComponent1 && edge->connectedComponent != selectedComponent2)
-				{
-					continue;
+
+		whorlEdgeStemVBO.clear();
+		nonWhorlEdgeStemVBO.clear();
+		selectedWhorlBranchesVBO.clear();
+		nonSelectedWhorlBranchesVBO.clear();
+		nonStemNonBranchesVBO.clear();
+
+		if (whorls.size() == 0 && auto_stem_metaNode.size() == 0) {
+			metaEdgeIter mei = boost::edges(*this);
+			for (; mei.first != mei.second; ++mei) {
+				BMetaEdge *edge = &operator[](*mei.first);
+				edge->updateGraphColors(vertexColors);
+				for (int i = 0; i < edge->indicesList.size(); ++i) nonStemNonBranchesVBO.push_back(edge->indicesList[i]);
+			}
+		}
+		else if(whorls.size() == 0) {
+			metaEdgeIter mei = boost::edges(*this);
+			for (; mei.first != mei.second; ++mei) {
+				BMetaEdge *edge = &operator[](*mei.first);
+				edge->updateGraphColors(vertexColors);
+				MetaE edgeME = *mei.first;
+				if (std::find(auto_stem_metaEdge.begin(), auto_stem_metaEdge.end(), edgeME) != auto_stem_metaEdge.end()) {
+					for (int i = 0; i < edge->indicesList.size(); ++i) nonWhorlEdgeStemVBO.push_back(edge->indicesList[i]);
+				}
+				else {
+					for (int i = 0; i < edge->indicesList.size(); ++i) nonStemNonBranchesVBO.push_back(edge->indicesList[i]);
 				}
 			}
-			if (edge->isSelected)
-			{
-				for (int i = 0; i < edge->indicesList.size(); ++i)
-				{
-					selectionVBO.push_back(edge->indicesList[i]);
+		}
+		else { // whorls.size() != 0
+			std::set<MetaE> allWhorlEdges;
+			for (auto it = auto_node.begin(); it != auto_node.end(); ++it) for (MetaE e : std::get<2>(*it)) allWhorlEdges.insert(e);
+			metaEdgeIter mei = boost::edges(*this);
+			for (; mei.first != mei.second; ++mei) {
+				BMetaEdge *edge = &operator[](*mei.first);
+				edge->updateGraphColors(vertexColors);
+				MetaE edgeME = *mei.first;
+				if (allWhorlEdges.find(edgeME) != allWhorlEdges.end()) {
+					for (int i = 0; i < edge->indicesList.size(); ++i) whorlEdgeStemVBO.push_back(edge->indicesList[i]);
 				}
-			}
-			else if (edge->isBridge)
-			{
-				for (int i = 0; i < edge->indicesList.size(); ++i)
-				{
-					bridgeVBO.push_back(edge->indicesList[i]);
-					if (edge->indicesList[i] * 3 > mSkeleton.glVertices.size())
-					{
-						std::cout << "skeleton vertices exceeded " << std::endl;
-					}
+				else if (std::find(auto_stem_metaEdge.begin(), auto_stem_metaEdge.end(), edgeME) != auto_stem_metaEdge.end()) {
+					for (int i = 0; i < edge->indicesList.size(); ++i) nonWhorlEdgeStemVBO.push_back(edge->indicesList[i]);
 				}
-			}
-			else if (!edge->isBridge)
-			{
-				for (int i = 0; i < edge->indicesList.size(); ++i)
-				{
-					nonBridgeVBO.push_back(edge->indicesList[i]);
+				else {
+					for (int i = 0; i < edge->indicesList.size(); ++i) nonStemNonBranchesVBO.push_back(edge->indicesList[i]);
 				}
 			}
 		}
 
-		if (stemSelected)
-		{
-			for (MetaE edge : auto_stem_metaEdge)
-			{
-				BMetaEdge *Medge = &operator[](edge);
-				for (int i = 0; i < Medge->indicesList.size(); ++i)
-				{
-					stemVBO.push_back(Medge->indicesList[i]);
-				}
-			}
-		}
+		//metaEdgeIter mei = boost::edges(*this);
+		//for (; mei.first != mei.second; ++mei)
+		//{
+		//	BMetaEdge *edge = &operator[](*mei.first);
+		//	edge->updateGraphColors(vertexColors);
+		//	if (onlyDisplaySelectedComponents)
+		//	{
+		//		if (edge->connectedComponent != selectedComponent1 && edge->connectedComponent != selectedComponent2)
+		//		{
+		//			continue;
+		//		}
+		//	}
+		//	if (edge->isSelected)
+		//	{
+		//		for (int i = 0; i < edge->indicesList.size(); ++i)
+		//		{
+		//			selectionVBO.push_back(edge->indicesList[i]);
+		//		}
+		//	}
+		//	else if (edge->isBridge)
+		//	{
+		//		for (int i = 0; i < edge->indicesList.size(); ++i)
+		//		{
+		//			bridgeVBO.push_back(edge->indicesList[i]);
+		//			if (edge->indicesList[i] * 3 > mSkeleton.glVertices.size())
+		//			{
+		//				std::cout << "skeleton vertices exceeded " << std::endl;
+		//			}
+		//		}
+		//	}
+		//	else if (!edge->isBridge)
+		//	{
+		//		for (int i = 0; i < edge->indicesList.size(); ++i)
+		//		{
+		//			nonBridgeVBO.push_back(edge->indicesList[i]);
+		//		}
+		//	}
+		//}
 
-		// push back to selectedSegmentVBO
-		if (SegmentMetaEdges.size() > 0)
-		{
-			for (MetaE edge : SegmentMetaEdges)
-			{
-				BMetaEdge *Medge = &operator[](edge);
-				for (int i = 0; i < Medge->indicesList.size(); ++i)
-				{
-					selectedSegmentVBO.push_back(Medge->indicesList[i]);
-				}
-			}
-		}
+		//if (stemSelected)
+		//{
+		//	for (MetaE edge : auto_stem_metaEdge)
+		//	{
+		//		BMetaEdge *Medge = &operator[](edge);
+		//		for (int i = 0; i < Medge->indicesList.size(); ++i)
+		//		{
+		//			stemVBO.push_back(Medge->indicesList[i]);
+		//		}
+		//	}
+		//}
 
-		// push back to primaryBranchesVBO
-		if (PrimaryBranchesObj.size() > 0)
-		{
-			for (auto vectorit = PrimaryBranchesObj.begin(); vectorit != PrimaryBranchesObj.end(); ++vectorit)
-			{
-				for (MetaE edge : vectorit->metaEdges)
-				{
-					BMetaEdge *Medge = &operator[](edge);
-					for (int i = 0; i < Medge->indicesList.size(); ++i)
-					{
-						primaryBranchesVBO.push_back(Medge->indicesList[i]);
-					}
-					MetaV v0 = edge.m_source;
-					if (std::find(TraitsNodes.begin(), TraitsNodes.end(), v0) == TraitsNodes.end())
-					{
-						TraitsNodes.push_back(v0);
-					}
-					MetaV v1 = edge.m_target;
-					if (std::find(TraitsNodes.begin(), TraitsNodes.end(), v1) == TraitsNodes.end())
-					{
-						TraitsNodes.push_back(v1);
-					}
-				}
-			}
-		}
+		//// push back to selectedSegmentVBO
+		//if (SegmentMetaEdges.size() > 0)
+		//{
+		//	for (MetaE edge : SegmentMetaEdges)
+		//	{
+		//		BMetaEdge *Medge = &operator[](edge);
+		//		for (int i = 0; i < Medge->indicesList.size(); ++i)
+		//		{
+		//			selectedSegmentVBO.push_back(Medge->indicesList[i]);
+		//		}
+		//	}
+		//}
+
+		//// push back to primaryBranchesVBO
+		//if (PrimaryBranchesObj.size() > 0)
+		//{
+		//	for (auto vectorit = PrimaryBranchesObj.begin(); vectorit != PrimaryBranchesObj.end(); ++vectorit)
+		//	{
+		//		for (MetaE edge : vectorit->metaEdges)
+		//		{
+		//			BMetaEdge *Medge = &operator[](edge);
+		//			for (int i = 0; i < Medge->indicesList.size(); ++i)
+		//			{
+		//				primaryBranchesVBO.push_back(Medge->indicesList[i]);
+		//			}
+		//			MetaV v0 = edge.m_source;
+		//			if (std::find(TraitsNodes.begin(), TraitsNodes.end(), v0) == TraitsNodes.end())
+		//			{
+		//				TraitsNodes.push_back(v0);
+		//			}
+		//			MetaV v1 = edge.m_target;
+		//			if (std::find(TraitsNodes.begin(), TraitsNodes.end(), v1) == TraitsNodes.end())
+		//			{
+		//				TraitsNodes.push_back(v1);
+		//			}
+		//		}
+		//	}
+		//}
 	}
 
 	MetaV BMetaGraph::addNode(SkelVert srcVert, BSkeleton *srcSkel)
@@ -2334,7 +2398,6 @@ namespace Roots
 			mPrev = mCurr;
 		}
 		unselectAll();
-		return;
 	}
 
 	void BMetaGraph::FindStemOperation(float lowThreshold)
@@ -2732,6 +2795,7 @@ namespace Roots
 		selectStemEndValid = true;
 
 		showSuggestedStem = true;
+		buildEdgeVBOs();
 	}
 
 	// input param val - look distance for each vertex
@@ -2968,8 +3032,7 @@ namespace Roots
 			showWhorl = true;
 			mode = OperationMode::EditWhorl;
 		}
-
-		return;
+		buildEdgeVBOs();
 	}
 
 	bool BMetaGraph::branchLongerThanThreshold(MetaV prev, MetaV self, float threshold) {

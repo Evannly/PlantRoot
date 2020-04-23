@@ -703,6 +703,7 @@ namespace Roots
 			mode = OperationMode::None;
 			nodeOptions.showEndpoints = prevShowEndpoints;
 			nodeOptions.showJunctions = prevShowJunctions;
+			buildEdgeVBOs();
 		}
 	}
 
@@ -725,6 +726,7 @@ namespace Roots
 			mode = OperationMode::None;
 			nodeOptions.showEndpoints = prevShowEndpoints;
 			nodeOptions.showJunctions = prevShowJunctions;
+			buildEdgeVBOs();
 		}
 	}
 
@@ -781,6 +783,7 @@ namespace Roots
 			selectWhorlValid = true;
 			mode = OperationMode::EditWhorl;
 			showWhorl = true;
+			buildEdgeVBOs();
 		}
 	}
 
@@ -795,6 +798,7 @@ namespace Roots
 		}
 		selectWhorlValid = false;
 		selectedWhorl = 99999999;
+		buildEdgeVBOs();
 	}
 
 	void BMetaGraph::selectWhorlUpperBound(int mouseX, int mouseY) {
@@ -820,6 +824,7 @@ namespace Roots
 			newAssociatedNodes.push_back(lowerBound);
 			auto_node[index] = std::tuple<MetaV, std::vector<MetaV>, std::vector<MetaE>>(selectedWhorl, newAssociatedNodes, newAssociatedEdges);
 			mode = OperationMode::EditWhorl;
+			buildEdgeVBOs();
 		}
 	}
 
@@ -846,6 +851,7 @@ namespace Roots
 			newAssociatedNodes.push_back(lowerBound);
 			auto_node[index] = std::tuple<MetaV, std::vector<MetaV>, std::vector<MetaE>>(selectedWhorl, newAssociatedNodes, newAssociatedEdges);
 			mode = OperationMode::EditWhorl;
+			buildEdgeVBOs();
 		}
 	}
 

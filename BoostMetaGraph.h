@@ -272,6 +272,17 @@ namespace Roots{
 		
 		std::vector<GLuint> traceBranchVBO;
 
+		// 1. whorl edges on stem
+		// 2. non whorl edges on stem
+		// 3. branches associated with current selected whorl
+		// 4. branches not associated with current selected whorl
+		// 5. other edges (not stem, not traced branches)
+		std::vector<GLuint> whorlEdgeStemVBO;
+		std::vector<GLuint> nonWhorlEdgeStemVBO;
+		std::vector<GLuint> selectedWhorlBranchesVBO;
+		std::vector<GLuint> nonSelectedWhorlBranchesVBO;
+		std::vector<GLuint> nonStemNonBranchesVBO;
+
 		std::vector<GLuint> testVBO; // use for debug
 		GLfloat selectionColor[4];
 		float eyeShiftX, eyeShiftY;
