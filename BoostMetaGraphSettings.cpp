@@ -660,7 +660,7 @@ namespace Roots
 
 		if (autoStemVBO.size() > 0 && showSuggestedStem)
 		{
-			glDisable(GL_DEPTH_TEST);
+			//glDisable(GL_DEPTH_TEST);
 
 			std::vector<float> testColor(mSkeleton.glVertices.size(), 1);
 
@@ -670,12 +670,12 @@ namespace Roots
 			glLineWidth(5);
 			glDrawElements(GL_LINES, autoStemVBO.size(), GL_UNSIGNED_INT, &autoStemVBO[0]);
 
-			glEnable(GL_DEPTH_TEST);
+			//glEnable(GL_DEPTH_TEST);
 		}
 
 		if (traceBranchVBO.size() > 0 && showTracedBranches)
 		{
-			glDisable(GL_DEPTH_TEST);
+			//glDisable(GL_DEPTH_TEST);
 
 			std::vector<float> testColor(mSkeleton.glVertices.size(), 1);
 
@@ -685,7 +685,7 @@ namespace Roots
 			glLineWidth(edgeOptions.scale);
 			glDrawElements(GL_LINES, traceBranchVBO.size(), GL_UNSIGNED_INT, &traceBranchVBO[0]);
 
-			glEnable(GL_DEPTH_TEST);
+			//glEnable(GL_DEPTH_TEST);
 		}
 
 		if (showWhorl && auto_node.size() > 0)
@@ -705,17 +705,19 @@ namespace Roots
 				}
 			}
 
-			glDisable(GL_DEPTH_TEST);
+			if (nodeRegionVBO.size() != 0) {
+				//glDisable(GL_DEPTH_TEST);
 
-			std::vector<float> testColor(mSkeleton.glVertices.size(), 0);
+				std::vector<float> testColor(mSkeleton.glVertices.size(), 0);
 
-			glVertexPointer(3, GL_FLOAT, 0, &mSkeleton.glVertices[0]);
-			glColorPointer(3, GL_FLOAT, 0, testColor.data());
+				glVertexPointer(3, GL_FLOAT, 0, &mSkeleton.glVertices[0]);
+				glColorPointer(3, GL_FLOAT, 0, testColor.data());
 
-			glLineWidth(8);
-			glDrawElements(GL_LINES, nodeRegionVBO.size(), GL_UNSIGNED_INT, &nodeRegionVBO[0]);
+				glLineWidth(15);
+				glDrawElements(GL_LINES, nodeRegionVBO.size(), GL_UNSIGNED_INT, &nodeRegionVBO[0]);
 
-			glEnable(GL_DEPTH_TEST);
+				//glEnable(GL_DEPTH_TEST);
+			}
 		}
 
 		glDisableClientState(GL_VERTEX_ARRAY);
@@ -816,10 +818,6 @@ namespace Roots
 			drawSphere.fancierDraw(WHITE, end.x(), end.y(), end.z(), 2);
 		}
 
-		//if (showWhorl) {
-		//	return;
-		//}
-
 		if (showTracedBranches) {
 			if (nodeOptions.showEndpoints) {
 				for (SkelVert sv : allValidBranchingPoints) {
@@ -837,11 +835,13 @@ namespace Roots
 			BMetaNode *node = &operator[](*mvi.first);
 			int degree = boost::degree(*mvi.first, *this);
 
-			if ((degree == 1 && !nodeOptions.showEndpoints) || (degree > 2 && !nodeOptions.showJunctions) || degree == 2)
-			{
-				continue;
+			bool isSelectableEndpoint = degree == 1 && nodeOptions.showEndpoints;
+			bool isSelectableJunction = degree > 2 && nodeOptions.showJunctions;
+			bool isAddableWhorl = (mode == OperationMode::AddWhorl) && (std::find(auto_stem_metaNode.begin(), auto_stem_metaNode.end(), *mvi.first) != auto_stem_metaNode.end()) && (invalidWhorlCandidates.find(*mvi.first) == invalidWhorlCandidates.end());
+			bool isSelectableUpperBound = (mode == OperationMode::SelectWhorlUpperBound) && (boundNodeCandidates.find(*mvi.first) != boundNodeCandidates.end());
+			bool isSelectableLowerBound = (mode == OperationMode::SelectWhorlLowerBound) && (boundNodeCandidates.find(*mvi.first) != boundNodeCandidates.end());
 
-			}
+			if (!isSelectableEndpoint && !isSelectableJunction && !isAddableWhorl && !isSelectableUpperBound && !isSelectableLowerBound) continue;
 
 			if (showTraitsOnly)
 			{
@@ -859,8 +859,6 @@ namespace Roots
 					continue;
 				}
 			}
-
-			bool isSelected = false;
 
 			float scale = 0.0;
 
@@ -892,56 +890,6 @@ namespace Roots
 			{
 				nodeColor = node->currentColor;
 			}
-			
-			//if (!PrimaryBranchesNode.empty() && (std::find(PrimaryBranchesNode.begin(), PrimaryBranchesNode.end(), *mvi.first) != PrimaryBranchesNode.end()))
-			if (PrimaryBranchSelectionValid && (*mvi.first == PrimaryBranchSelection))
-			{
-				isSelected = true;
-				//nodeColor = selectedPrimaryNodeColor;
-			}
-
-			if (viewNodeInfoValid && *mvi.first == nodeToView)
-			{
-				isSelected = true;
-			}
-
-			//// primary nodes setting
-			//MetaV temp = *mvi.first;
-			//auto it = std::find_if(PrimaryNodes.begin(), PrimaryNodes.end(), [&temp](const std::pair<int, MetaV>& element) { return element.second == temp; });
-			//if ( it != PrimaryNodes.end() )
-			//{
-			//	//isSelected = true; // all primary nodes : show bigger
-			//	if (isRandomColorizePrimaryNodes)
-			//	{
-			//		int index = std::distance(PrimaryNodes.begin(), it);
-			//		index = index % randomColorLoopUpTable.size();
-			//		GLfloat temp[4];
-			//		for (int i = 0; i < 4; ++i)
-			//		{
-			//			temp[i] = randomColorLoopUpTable[index][i];
-			//			//temp[i] = ColorTable::getComponentColor(index)[i];
-			//		}
-			//		nodeColor = temp;
-			//	}
-			//	//if (selectPrimaryNodesValid)//&& (temp == PrimaryNodes.back().second))
-			//	if (showPrimaryNodes)
-			//	{
-			//		isSelected = true;
-			//	}
-			//}
-
-			//if ((CurrentPrimaryNode != -1) && (it != PrimaryNodes.end()))
-			//{
-			//	if (*mvi.first == PrimaryNodes[CurrentPrimaryNode].second)
-			//	{
-			//		isSelected = true;
-			//	}
-			//}
-
-			if ((*mvi.first == selectSegmentPoint1 && selectSegmentPoint1Valid) || (*mvi.first == selectSegmentPoint2 && selectSegmentPoint2Valid))
-			{
-				isSelected = true;
-			}
 
 			if (degree <= 1)
 			{
@@ -951,21 +899,8 @@ namespace Roots
 			{
 				scale = nodeOptions.junctionScale;
 			}
-
-			if (isSelected)
-			{
-				scale *= nodeSelectionScaling;
-			}
-
-			if (degree == 0)
-			{
-				drawCube.fancierDraw(nodeColor, node->x(), node->y(), node->z(), scale);
-				// std::cout << "drawNode degree = 0" << std::endl;
-			}
-			else
-			{
-				drawSphere.fancierDraw(nodeColor, node->x(), node->y(), node->z(), scale);
-			}
+				
+			drawSphere.fancierDraw(nodeColor, node->x(), node->y(), node->z(), scale);
 		}
 	}
 
@@ -984,67 +919,28 @@ namespace Roots
 		glLoadMatrixf(modelViewTransform);
 
 		metaVertIter mvi = boost::vertices(*this);
-		std::cout << "Node id's " << std::endl;
 		GLubyte nodeIdColor[3];
 		for (; mvi.first != mvi.second; ++mvi)
 		{
+
 			BMetaNode *node = &operator[](*mvi.first);
 			int degree = boost::degree(*mvi.first, *this);
 
-			if ((degree == 1 && !nodeOptions.showEndpoints) || (degree > 2 && !nodeOptions.showJunctions) || degree == 2)
-			{
-				continue;
-			}
+			bool isSelectableEndpoint = degree == 1 && nodeOptions.showEndpoints;
+			bool isSelectableJunction = degree > 2 && nodeOptions.showJunctions;
+			bool isSelectableWhorl = whorls.find(*mvi.first) != whorls.end() && showWhorl;
+			bool isAddableWhorl = (mode == OperationMode::AddWhorl) && (std::find(auto_stem_metaNode.begin(), auto_stem_metaNode.end(), *mvi.first) != auto_stem_metaNode.end()) && (invalidWhorlCandidates.find(*mvi.first) == invalidWhorlCandidates.end());
+			bool isSelectableUpperBound = (mode == OperationMode::SelectWhorlUpperBound) && (boundNodeCandidates.find(*mvi.first) != boundNodeCandidates.end());
+			bool isSelectableLowerBound = (mode == OperationMode::SelectWhorlLowerBound) && (boundNodeCandidates.find(*mvi.first) != boundNodeCandidates.end());
 
-
-			bool isSelected = false;
-
-			float scale = 0.0;
-
-			if (onlyDisplaySelectedComponents)
-			{
-				if (node->connectedComponent != selectedComponent1 && node->connectedComponent != selectedComponent2)
-				{
-					continue;
-				}
-			}
+			if (!isSelectableEndpoint && !isSelectableJunction && !isSelectableWhorl && !isAddableWhorl && !isSelectableUpperBound && !isSelectableLowerBound) continue;
 
 			int num = (*mvi.first);
 			nodeIdColor[0] = (num & 0x000000FF) >> 0;
 			nodeIdColor[1] = (num & 0x0000FF00) >> 8;
 			nodeIdColor[2] = (num & 0x00FF0000) >> 16;
 
-			if ((*mvi.first == selectNode1 && selectNode1Valid) || (*mvi.first == selectNode2 && selectNode2Valid))
-			{
-				isSelected = true;
-			}
-			
-			if ((*mvi.first == selectStemStart && selectStemStartValid) || (*mvi.first == selectStemEnd && selectStemEndValid))
-			{
-				isSelected = true;
-			}
-
-			if (viewNodeInfoValid && *mvi.first == nodeToView)
-			{
-				isSelected = true;
-			}
-
-			MetaV temp = *mvi.first;
-			auto it = std::find_if(PrimaryNodes.begin(), PrimaryNodes.end(), [&temp](const std::pair<int, MetaV>& element) { return element.second == temp; });
-			if (it != PrimaryNodes.end())
-			{
-				isSelected = true;
-			}
-
-			if (PrimaryBranchSelectionValid && (*mvi.first == PrimaryBranchSelection))
-			{
-			isSelected = true;
-			}
-
-			if ((*mvi.first == selectSegmentPoint1 && selectSegmentPoint1Valid) || (*mvi.first == selectSegmentPoint2 && selectSegmentPoint2Valid))
-			{
-				isSelected = true;
-			}
+			float scale = 0.0;
 
 			if (degree <= 1)
 			{
@@ -1055,23 +951,11 @@ namespace Roots
 				scale = nodeOptions.junctionScale;
 			}
 
-			if (isSelected)
-			{
-				scale *= nodeSelectionScaling;
+			if (whorls.find(*mvi.first) != whorls.end()) {
+				scale *= 4;
 			}
 
-			if (degree == 0)
-			{
-				if (!PrimaryBranchSelectionValid)
-				{
-					drawCube.pickDraw(nodeIdColor, node->x(), node->y(), node->z(), scale);
-					std::cout << "nodePickRender degree = 0" << std::endl;
-				}
-			}
-			else
-			{
-				drawSphere.pickDraw(nodeIdColor, node->x(), node->y(), node->z(), scale);
-			}
+			drawSphere.pickDraw(nodeIdColor, node->x(), node->y(), node->z(), scale);
 		}
 
 		glPopMatrix();
@@ -1128,17 +1012,18 @@ namespace Roots
 
 	void BMetaGraph::drawWhorls()
 	{
-		if (showWhorl && auto_node.size() > 0)
+		if (showWhorl && mode != OperationMode::AddWhorl && auto_node.size() > 0)
 		{
 			for (int i = 0; i < auto_node.size(); ++i)
 			{
+				if ((mode == OperationMode::SelectWhorlUpperBound || mode == OperationMode::SelectWhorlLowerBound) && std::get<0>(auto_node[i]) != selectedWhorl) continue;
 				float x = (&operator[](std::get<0>(auto_node[i])))->p[0];
 				float y = (&operator[](std::get<0>(auto_node[i])))->p[1];
 				float z = (&operator[](std::get<0>(auto_node[i])))->p[2];
 				GLfloat color[4] = { 1, 0, 0, 1 };
 				if (std::get<0>(auto_node[i]) == selectedWhorl) {
-					color[2] = 1;
-					color[3] = 1;
+					color[0] = 0;
+					color[1] = 1;
 				}
 				drawSphere.fancierDraw(color, x, y, z, 2);
 
@@ -1151,9 +1036,8 @@ namespace Roots
 				float end_x = (&operator[](end))->p[0];
 				float end_y = (&operator[](end))->p[1];
 				float end_z = (&operator[](end))->p[2];
-				GLfloat start_end_color[4] = { 1, 0, 0, 1 };
-				drawSphere.fancierDraw(start_end_color, start_x, start_y, start_z, 1);
-				drawSphere.fancierDraw(start_end_color, end_x, end_y, end_z, 1);
+				drawSphere.fancierDraw(color, start_x, start_y, start_z, 1);
+				drawSphere.fancierDraw(color, end_x, end_y, end_z, 1);
 			}
 		}
 	}
@@ -1162,31 +1046,10 @@ namespace Roots
 	{
 		if (useArcball)
 		{
-			//glMatrixMode(GL_MODELVIEW);
 			glTranslatef(eyeShiftX, eyeShiftY, -mSkeleton.mRadius * 2);
 			arcball_rotate();
 			glTranslatef(-viewCenter.x(), -viewCenter.y(), -viewCenter.z());
 		}
-
-		/*
-		if (isDisplaySelectedSegment())
-		{
-			//getClipPlane();
-			glEnable(GL_CLIP_PLANE0);
-			glEnable(GL_CLIP_PLANE1);
-			GLdouble *c = new GLdouble[4];
-			for (int i = 0; i < 4; ++i)
-			{
-				c[i] = rootClipPlaneNormal[0][i];
-			}
-			glClipPlane(GL_CLIP_PLANE0, c);
-			for (int i = 0; i < 4; ++i)
-			{
-				c[i] = rootClipPlaneNormal[1][i];
-			}
-			glClipPlane(GL_CLIP_PLANE1, c);
-		}*/
-
 		glEnable(GL_LIGHTING);
 		drawNodes();
 		drawWhorls();
@@ -1194,13 +1057,6 @@ namespace Roots
 		drawEdges();
 		glGetFloatv(GL_MODELVIEW_MATRIX, modelViewTransform);
 		glGetFloatv(GL_PROJECTION_MATRIX, projectionTransform);
-		/*
-		if (isDisplaySelectedSegment())
-		{
-			glDisable(GL_CLIP_PLANE0);
-			glDisable(GL_CLIP_PLANE1);
-		}*/
-
 		if (displayMesh)
 		{
 			alphaMesh.render();

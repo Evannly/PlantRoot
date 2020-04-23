@@ -829,6 +829,8 @@ namespace Roots
 		selectedWhorl = 99999999;
 		whorls = {};
 		auto_node = {};
+		invalidWhorlCandidates = {};
+		boundNodeCandidates = {};
 		showPrimaryNodes = false;
 		PrimaryNodes = {};
 		selectPrimaryNodesValid = false;
@@ -2337,6 +2339,8 @@ namespace Roots
 
 	void BMetaGraph::FindStemOperation(float lowThreshold)
 	{
+		if (!isLoaded) return;
+
 		std::cout << "Automatically detecting stem. Low threshold: " << lowThreshold << std::endl;
 
 		// clear currently stored stem and visualization
@@ -2726,6 +2730,8 @@ namespace Roots
 		selectStemEnd = auto_stem_metaNode[auto_stem_metaNode.size() - 1];
 		selectStemStartValid = true;
 		selectStemEndValid = true;
+
+		showSuggestedStem = true;
 	}
 
 	// input param val - look distance for each vertex

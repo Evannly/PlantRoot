@@ -35,7 +35,10 @@ enum OperationMode
 	Break = 3,
 	Split = 4,
 	SelectStemTop = 5,
-	SelectStemBottom = 6
+	SelectStemBottom = 6,
+	AddWhorl = 7,
+	SelectWhorlUpperBound = 10,
+	SelectWhorlLowerBound = 11
 };
 
 
@@ -334,6 +337,8 @@ namespace Roots{
 		MetaV selectedWhorl;
 		std::set<MetaV> whorls;
 		std::vector<std::tuple<MetaV, std::vector<MetaV>, std::vector<MetaE>>> auto_node;
+		std::set<MetaV> invalidWhorlCandidates;
+		std::set<MetaV> boundNodeCandidates;
 		std::vector< std::pair<int, MetaV> > PrimaryNodes;
 		bool selectPrimaryNodesValid;
 		struct PrimaryNodesPredecessorsStruct
@@ -507,7 +512,11 @@ namespace Roots{
 		void selectStemTopNode(int mouseX, int mouseY);
 		void selectStemBottomNode(int mouseX, int mouseY);
 		void selectWhorl(int mouseX, int mouseY);
+		bool whorlSelectionValid();
+		void addWhorl(int mouseX, int mouseY);
 		void deleteWhorl();
+		void selectWhorlUpperBound(int mouseX, int mouseY);
+		void selectWhorlLowerBound(int mouseX, int mouseY);
 		void selectStemPrimaryNode(int mouseX, int mouseY);
 		void selectPrimaryBranches(int mouseX, int mouseY);
 		void selectSegmentPointAction(int mouseX, int mouseY);

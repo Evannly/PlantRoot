@@ -242,11 +242,50 @@ namespace Roots
 	}
 
 	void BMetaGraph::setMode(int _mode) {
-		if (_mode == 5 || _mode == 6) {
+		if (_mode == 2) { // edit whorl
+			if (auto_stem_metaNode.size() == 0) return;
+		}
+		if (_mode == 5 || _mode == 6) { // select stem upper/lower bound
 			prevShowEndpoints = nodeOptions.showEndpoints;
 			prevShowJunctions = nodeOptions.showJunctions;
 			nodeOptions.showEndpoints = true;
 			nodeOptions.showJunctions = true;
+		}
+		if (_mode == 7) { // add whorl
+			if (auto_stem_metaNode.size() == 0) return;
+			selectedWhorl = 99999999;
+			selectWhorlValid = false;
+			invalidWhorlCandidates.clear();
+			for (auto it = auto_node.begin(); it != auto_node.end(); ++it) for (MetaV v : std::get<1>(*it)) invalidWhorlCandidates.insert(v);
+			for (MetaV v : invalidWhorlCandidates) std::cout << v << std::endl;
+		}
+		if (_mode == 10) { // select whorl upper bound
+			boundNodeCandidates.clear();
+			auto it = std::find(auto_stem_metaNode.begin(), auto_stem_metaNode.end(), selectedWhorl);
+			if (*it == std::get<0>(auto_node[0])) {
+				for (auto subit = auto_stem_metaNode.begin(); subit != it; ++subit) boundNodeCandidates.insert(*subit);
+			}
+			else {
+				int index = 0;
+				while (std::get<0>(auto_node[index]) != selectedWhorl) index++;
+				MetaV prevLowerBound = *(std::get<1>(auto_node[index - 1]).end() - 1);
+				for (auto subit = it - 1; *subit != prevLowerBound; --subit) boundNodeCandidates.insert(*subit);
+			}
+			if (boundNodeCandidates.size() == 0) return;
+		}
+		if (_mode == 11) { // select whorl lower bound
+			boundNodeCandidates.clear();
+			auto it = std::find(auto_stem_metaNode.begin(), auto_stem_metaNode.end(), selectedWhorl);
+			if (*it == std::get<0>(auto_node[auto_node.size() - 1])) {
+				for (auto subit = it + 1; subit != auto_stem_metaNode.end(); ++subit) boundNodeCandidates.insert(*subit);
+			}
+			else {
+				int index = 0;
+				while (std::get<0>(auto_node[index]) != selectedWhorl) index++;
+				MetaV nextUpperBound = *(std::get<1>(auto_node[index + 1]).begin());
+				for (auto subit = it + 1; *subit != nextUpperBound; ++subit) boundNodeCandidates.insert(*subit);
+			}
+			if (boundNodeCandidates.size() == 0) return;
 		}
 		mode = static_cast<OperationMode>(_mode);
 	}
@@ -709,6 +748,42 @@ namespace Roots
 		}
 	}
 
+	bool BMetaGraph::whorlSelectionValid() {
+		return selectWhorlValid;
+	}
+
+	void BMetaGraph::addWhorl(int mouseX, int mouseY) {
+		if (mode != OperationMode::AddWhorl) return;
+		std::cout << "addWhorl: " << mouseX << " " << mouseY << std::endl;
+		MetaV node;
+		bool isValid = false;
+		node = selectNodeByRender(mouseX, mouseY, isValid);
+		isValid = isValid && (std::find(auto_stem_metaNode.begin(), auto_stem_metaNode.end(), node) != auto_stem_metaNode.end());
+
+		std::cout << "node: " << node << " , isValid: " << isValid << std::endl;
+
+		if (isValid) {
+			whorls.insert(node);
+			std::vector<MetaV> associated_nodes;
+			std::vector<MetaE> associated_edges;
+			associated_nodes.push_back(node);
+			auto it = std::find(auto_stem_metaNode.begin(), auto_stem_metaNode.end(), node) + 1;
+			while (it != auto_stem_metaNode.end() && whorls.find(*it) == whorls.end()) it++;
+			if (it == auto_stem_metaNode.end()) {
+				auto_node.push_back(std::tuple<MetaV, std::vector<MetaV>, std::vector<MetaE>>(node, associated_nodes, associated_edges));
+			}
+			else {
+				int index = 0;
+				while (std::get<0>(auto_node[index]) != *it) index++;
+				auto_node.insert(auto_node.begin() + index, std::tuple<MetaV, std::vector<MetaV>, std::vector<MetaE>>(node, associated_nodes, associated_edges));
+			}
+			selectedWhorl = node;
+			selectWhorlValid = true;
+			mode = OperationMode::EditWhorl;
+			showWhorl = true;
+		}
+	}
+
 	void BMetaGraph::deleteWhorl() {
 		if (mode != OperationMode::EditWhorl || !selectWhorlValid) return;
 		whorls.erase(selectedWhorl);
@@ -720,6 +795,58 @@ namespace Roots
 		}
 		selectWhorlValid = false;
 		selectedWhorl = 99999999;
+	}
+
+	void BMetaGraph::selectWhorlUpperBound(int mouseX, int mouseY) {
+		if (mode != OperationMode::SelectWhorlUpperBound) return;
+		std::cout << "selectWhorlUpperBound: " << mouseX << " " << mouseY << std::endl;
+		MetaV upperBound;
+		bool isValid = false;
+		upperBound = selectNodeByRender(mouseX, mouseY, isValid);
+		isValid = isValid && (boundNodeCandidates.find(upperBound) != boundNodeCandidates.end());
+
+		std::cout << "node: " << upperBound << " , isValid: " << isValid << std::endl;
+
+		if (isValid) {
+			int index = 0;
+			while (std::get<0>(auto_node[index]) != selectedWhorl) index++;
+			MetaV lowerBound = *(std::get<1>(auto_node[index]).end() - 1);
+			std::vector<MetaV> newAssociatedNodes;
+			std::vector<MetaE> newAssociatedEdges;
+			for (auto it = std::find(auto_stem_metaNode.begin(), auto_stem_metaNode.end(), upperBound); *it != lowerBound; ++it) {
+				newAssociatedNodes.push_back(*it);
+				newAssociatedEdges.push_back(boost::edge(*it, *(it + 1), *this).first);
+			}
+			newAssociatedNodes.push_back(lowerBound);
+			auto_node[index] = std::tuple<MetaV, std::vector<MetaV>, std::vector<MetaE>>(selectedWhorl, newAssociatedNodes, newAssociatedEdges);
+			mode = OperationMode::EditWhorl;
+		}
+	}
+
+	void BMetaGraph::selectWhorlLowerBound(int mouseX, int mouseY) {
+		if (mode != OperationMode::SelectWhorlLowerBound) return;
+		std::cout << "selectWhorlLowerBound: " << mouseX << " " << mouseY << std::endl;
+		MetaV lowerBound;
+		bool isValid = false;
+		lowerBound = selectNodeByRender(mouseX, mouseY, isValid);
+		isValid = isValid && (boundNodeCandidates.find(lowerBound) != boundNodeCandidates.end());
+
+		std::cout << "node: " << lowerBound << " , isValid: " << isValid << std::endl;
+
+		if (isValid) {
+			int index = 0;
+			while (std::get<0>(auto_node[index]) != selectedWhorl) index++;
+			MetaV upperBound = *(std::get<1>(auto_node[index]).begin());
+			std::vector<MetaV> newAssociatedNodes;
+			std::vector<MetaE> newAssociatedEdges;
+			for (auto it = std::find(auto_stem_metaNode.begin(), auto_stem_metaNode.end(), upperBound); *it != lowerBound; ++it) {
+				newAssociatedNodes.push_back(*it);
+				newAssociatedEdges.push_back(boost::edge(*it, *(it + 1), *this).first);
+			}
+			newAssociatedNodes.push_back(lowerBound);
+			auto_node[index] = std::tuple<MetaV, std::vector<MetaV>, std::vector<MetaE>>(selectedWhorl, newAssociatedNodes, newAssociatedEdges);
+			mode = OperationMode::EditWhorl;
+		}
 	}
 
 	void BMetaGraph::selectStemPrimaryNode(int mouseX, int mouseY)
