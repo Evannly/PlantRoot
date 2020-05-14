@@ -330,7 +330,7 @@ namespace Roots{
 		std::vector<MetaV> auto_stem_metaNode;
 		std::vector<MetaE> auto_stem_metaEdge;
 		std::vector<MetaE> primary_branches;
-		std::vector<std::tuple<MetaV, SkelVert, std::vector<SkelEdge>>> branches;
+		std::map<MetaV, std::vector<std::vector<SkelEdge>>> branches;
 		std::map<SkelVert, SkelVert> allBranchingPointsWithParent;
 		std::set<SkelVert> allValidBranchingPoints;
 		std::map<SkelVert, std::pair<MetaV, float>> branchingPointToStemNodeWithDistanceMap;
@@ -407,7 +407,7 @@ namespace Roots{
 			{0.0f, 0.0f, 0.502f, 1.0f},
 			{0.502f, 0.502f, 0.502f, 1.0f} };
 		
-		
+		bool showBranch;
 		bool PrimaryBranchSelectionValid;
 		MetaV PrimaryBranchSelection;
 		struct PrimaryBranchStruct
@@ -478,13 +478,9 @@ namespace Roots{
 		void setComponent2(int component);
 		void setShowBoundingBoxes(bool doShow);
 
-		//void setDisplayStem(bool doShowStem);
 		void showHideStem();
-		//void setDisplayPrimaryNodes(bool doShowPriamryStem);
 		void showHideWhorl();
-		void setDisplayClusterInput(bool doShow);
-		void setDisplayTracingPrimaryBranches(bool doTrace);
-		void setDisplayTracingTree(bool doShow);
+		void showHideBranch();
 		void setCurrentPrimaryNode(int layer);
 		void setDisplayConfirmedPrimaryBranches(bool doShowConfirmedBranches);
 		void setRandomColorizePrimaryNodes(bool doShow);
@@ -621,6 +617,8 @@ namespace Roots{
 
 		void saveFairedSkeleton(std::string filename);
 		void writeToStream(std::ostream &out);
+
+		void preprocess();
 
 		/*
 		Traits load save operation
@@ -786,6 +784,7 @@ namespace Roots{
 		Automatically find priamry nodes
 		*/
 		void FindPrimaryNodeOperation(float look_distance, float kernel_bandwidth);
+		void TraceBranchOperation(MetaV whorl);
 		float getRelativeDistance(SkelVert sv1, SkelVert sv2);
 		bool vertexIsOutOfRadiusRange(SkelVert src, std::deque<SkelVert> stem, float timesThickness);
 		bool branchLongerThanThreshold(MetaV prev, MetaV self, float threshold);

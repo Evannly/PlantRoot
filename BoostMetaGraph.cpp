@@ -849,6 +849,7 @@ namespace Roots
 		selectPrimaryNodesValid = false;
 		NodesPredecessors = {};
 
+		showBranch = false;
 		CurrentPrimaryNode = -1;
 		CurrentPredecessors = {};
 		PrimaryBranchSelectionValid = false;
@@ -1094,6 +1095,11 @@ namespace Roots
 		}
 		filestream.close();
 		std::cout << "File saved: " << filename << std::endl;
+	}
+
+	void BMetaGraph::preprocess() {
+		std::cout << "preprocess" << std::endl;
+		FindStemOperation(4.0);
 	}
 
 	void BMetaGraph::loadTraitsFromFile(std::string filename)
@@ -1480,6 +1486,8 @@ namespace Roots
 		nonSelectedWhorlBranchesVBO.clear();
 		nonStemNonBranchesVBO.clear();
 
+		traceBranchVBO.clear();
+
 		if (whorls.size() == 0 && auto_stem_metaNode.size() == 0) {
 			metaEdgeIter mei = boost::edges(*this);
 			for (; mei.first != mei.second; ++mei) {
@@ -1504,6 +1512,9 @@ namespace Roots
 		}
 		else { // whorls.size() != 0
 			std::set<MetaE> allWhorlEdges;
+			std::set<SkelEdge> selectedWhorlBranches;
+			std::set<SkelEdge> nonSelectedWhorlBranches;
+			std::set<SkelEdge> nonStemNonBranches;
 			for (auto it = auto_node.begin(); it != auto_node.end(); ++it) for (MetaE e : std::get<2>(*it)) allWhorlEdges.insert(e);
 			metaEdgeIter mei = boost::edges(*this);
 			for (; mei.first != mei.second; ++mei) {
@@ -1517,8 +1528,36 @@ namespace Roots
 					for (int i = 0; i < edge->indicesList.size(); ++i) nonWhorlEdgeStemVBO.push_back(edge->indicesList[i]);
 				}
 				else {
-					for (int i = 0; i < edge->indicesList.size(); ++i) nonStemNonBranchesVBO.push_back(edge->indicesList[i]);
+					for (int i = 0; i < edge->indicesList.size(); i += 2) {
+						nonStemNonBranches.insert(boost::edge(edge->indicesList[i], edge->indicesList[i + 1], mSkeleton).first);
+					}
 				}
+			}
+
+			for (auto it = auto_node.begin(); it != auto_node.end(); ++it) {
+				if (std::get<0>(*it) == selectedWhorl) {
+					for (MetaV clustered : std::get<1>(*it)) for (std::vector<SkelEdge> branch : branches[clustered]) {
+						for (SkelEdge se : branch) {
+							selectedWhorlBranchesVBO.push_back(se.m_source);
+							selectedWhorlBranchesVBO.push_back(se.m_target);
+							nonStemNonBranches.erase(se);
+						}
+					}
+				}
+				else {
+					for (MetaV clustered : std::get<1>(*it)) for (std::vector<SkelEdge> branch : branches[clustered]) {
+						for (SkelEdge se : branch) {
+							nonSelectedWhorlBranchesVBO.push_back(se.m_source);
+							nonSelectedWhorlBranchesVBO.push_back(se.m_target);
+							nonStemNonBranches.erase(se);
+						}
+					}
+				}
+			}
+
+			for (SkelEdge se : nonStemNonBranches) {
+				nonStemNonBranchesVBO.push_back(se.m_source);
+				nonStemNonBranchesVBO.push_back(se.m_target);
 			}
 		}
 
@@ -2398,6 +2437,7 @@ namespace Roots
 			mPrev = mCurr;
 		}
 		unselectAll();
+		FindPrimaryNodeOperation(12, 10);
 	}
 
 	void BMetaGraph::FindStemOperation(float lowThreshold)
@@ -2796,11 +2836,13 @@ namespace Roots
 
 		showSuggestedStem = true;
 		buildEdgeVBOs();
+		FindPrimaryNodeOperation(12, 10);
 	}
 
 	// input param val - look distance for each vertex
 	void BMetaGraph::FindPrimaryNodeOperation(float look_distance, float kernel_bandwidth)
 	{
+		std::cout << look_distance << " " << kernel_bandwidth << std::endl;
 		std::vector<MetaV> cluster_input;
 		std::vector<float> cluster_input_position;
 		std::deque<SkelVert> sequence;
@@ -2842,14 +2884,14 @@ namespace Roots
 				MetaV prev = (i == 0) ? -1 : auto_stem_metaNode[i - 1];
 				MetaV next = (i == auto_stem_metaNode.size() - 1) ? -1 : auto_stem_metaNode[i + 1];
 				if (target != prev && target != next) {
-					std::cout << "Node " << auto_stem_metaNode[i] << " has a side branch to " << target;
+					//std::cout << "Node " << auto_stem_metaNode[i] << " has a side branch to " << target;
 					if (auto_stem_metaNode[i] != target) {
 						std::set<MetaV> visited;
 						if (branchExceedsStemBoundary(&visited, sequence, auto_stem_metaNode[i], target, 2.0f)) {
-							std::cout << " that exceeds the stem boundary";
+							//std::cout << " that exceeds the stem boundary";
 							validBranchesOnNode++;
 						}
-						std::cout << std::endl;
+						//std::cout << std::endl;
 					}
 				}
 			}
@@ -2881,7 +2923,7 @@ namespace Roots
 
 		// Mean shift clustering
 		std::vector<float> cluster = cluster_input_position;
-		std::cout << "initial position" << std::endl;
+		//std::cout << "initial position" << std::endl;
 		for (float position : cluster)
 		{
 			std::cout << position << " ";
@@ -2908,11 +2950,11 @@ namespace Roots
 				cluster[j] = new_position;
 			}
 
-			for (float position : cluster)
-			{
-				std::cout << " " << position;
-			}
-			std::cout << std::endl << std::endl;
+			//for (float position : cluster)
+			//{
+			//	std::cout << " " << position;
+			//}
+			//std::cout << std::endl << std::endl;
 		}
 
 		std::map<SkelVert, float> allValidBranchingPointToAutoStemMetaDistMap;
@@ -2927,18 +2969,18 @@ namespace Roots
 			allValidBranchingPointToAutoStemMetaDistMap[validBranchingPoint] = cluster[index];
 		}
 
-		std::map<SkelVert, float>::iterator it = allValidBranchingPointToAutoStemMetaDistMap.begin();
-		while (it != allValidBranchingPointToAutoStemMetaDistMap.end()) {
-			std::cout << "BranchingPoint: " << it->first << " MetaDist: " << it->second << std::endl;
-			++it;
-		}
+		//std::map<SkelVert, float>::iterator it = allValidBranchingPointToAutoStemMetaDistMap.begin();
+		//while (it != allValidBranchingPointToAutoStemMetaDistMap.end()) {
+		//	std::cout << "BranchingPoint: " << it->first << " MetaDist: " << it->second << std::endl;
+		//	++it;
+		//}
 
-		std::cout << "cluster_input.size() = " << cluster_input.size() << " cluster_input_position.size() = " << cluster_input_position.size() << std::endl;
-		std::cout << "cluster.size() = " << cluster.size() << std::endl << "cluster: " << std::endl;
+		//std::cout << "cluster_input.size() = " << cluster_input.size() << " cluster_input_position.size() = " << cluster_input_position.size() << std::endl;
+		//std::cout << "cluster.size() = " << cluster.size() << std::endl << "cluster: " << std::endl;
 
-		for (float f : cluster) {
-			std::cout << f << std::endl;
-		}
+		//for (float f : cluster) {
+		//	std::cout << f << std::endl;
+		//}
 
 		std::map<float, std::vector<MetaV>> cluster_position_to_associated_nodes_map;
 		std::map<float, std::vector<MetaE>> cluster_position_to_associated_edges_map;
@@ -2982,8 +3024,8 @@ namespace Roots
 
 		// Remove duplicates
 		cluster.erase(std::unique(cluster.begin(), cluster.end()), cluster.end());
-		std::cout << std::endl << "cluster size: " << cluster.size() << std::endl;
-		std::cout << "cluster input size: " << cluster_input_position.size() << std::endl;
+		//std::cout << std::endl << "cluster size: " << cluster.size() << std::endl;
+		//std::cout << "cluster input size: " << cluster_input_position.size() << std::endl;
 
 		for (int i = 0; i < cluster.size(); ++i)
 		{
@@ -3032,6 +3074,57 @@ namespace Roots
 			showWhorl = true;
 			mode = OperationMode::EditWhorl;
 		}
+		showBranch = true;
+		buildEdgeVBOs();
+	}
+
+	void BMetaGraph::TraceBranchOperation(MetaV whorl) {
+		std::vector<MetaV> associatedNodes;
+		bool found = false;
+		for (auto it = auto_node.begin(); it != auto_node.end(); ++it) {
+			if (std::get<0>(*it) == whorl) {
+				found = true;
+				associatedNodes = std::get<1>(*it);
+			}
+		}
+		if (!found) return;
+
+		std::deque<SkelVert> sequence;
+		for (MetaV v : auto_stem_metaNode) {
+			sequence.push_back(operator[](v).mSrcVert);
+		}
+
+		int validBranchesOnNode = 0;
+		for (size_t i = 0; i < associatedNodes.size(); ++i)
+		{
+			typename graph_traits<BoostMetaGraph>::out_edge_iterator ei, ei_end;
+			for (boost::tie(ei, ei_end) = out_edges(associatedNodes[i], *this); ei != ei_end; ++ei) {
+				MetaV target = boost::target(*ei, *this);
+				if (std::find(auto_stem_metaNode.begin(), auto_stem_metaNode.end(), target) == auto_stem_metaNode.end()) {
+					//std::cout << "Node " << auto_stem_metaNode[i] << " has a side branch to " << target;
+					std::set<MetaV> visited;
+					if (branchExceedsStemBoundary(&visited, sequence, auto_stem_metaNode[i], target, 2.0f)) {
+						validBranchesOnNode++;
+					}
+				}
+			}
+
+			if (validBranchesOnNode > 0) {
+				// Find the branching points
+				findBranchingPointsWithParent(auto_stem_metaNode[i], sequence, 1.0f);
+			}
+		}
+		std::set<SkelVert> pathTaken;
+		for (std::map<SkelVert, SkelVert>::iterator it = allBranchingPointsWithParent.begin(); it != allBranchingPointsWithParent.end(); ++it) {
+			std::set<SkelVert> visitedWhenTracingBranchesUsingLongestPath;
+			SkelVert parent = it->second;
+			SkelVert branchingPoint = it->first;
+			visitedWhenTracingBranchesUsingLongestPath.insert(parent);
+			std::map<SkelVert, SkelVert> childToParentMap;
+			std::map<SkelVert, float> pathLength;
+			traceBranchUsingLongestPath(branchingPoint, sequence, &pathTaken, visitedWhenTracingBranchesUsingLongestPath, 100.0f, 50.0f, 0.6f, 10);
+		}
+
 		buildEdgeVBOs();
 	}
 
@@ -3250,12 +3343,12 @@ namespace Roots
 				bestPathBuffer = pathEnd;
 			}
 		}
-		std::cout 
-			<< "branchingPoint: " << branchingPoint 
-			<< " StemNode: " << branchingPointToStemNodeWithDistanceMap[branchingPoint].first 
-			<< " Distance: " << branchingPointToStemNodeWithDistanceMap[branchingPoint].second 
-			<< " BestPathTo: " << bestPathBuffer 
-			<< " MaxPathLength: " << maxPathLength << std::endl;
+		//std::cout 
+		//	<< "branchingPoint: " << branchingPoint 
+		//	<< " StemNode: " << branchingPointToStemNodeWithDistanceMap[branchingPoint].first 
+		//	<< " Distance: " << branchingPointToStemNodeWithDistanceMap[branchingPoint].second 
+		//	<< " BestPathTo: " << bestPathBuffer 
+		//	<< " MaxPathLength: " << maxPathLength << std::endl;
 		if (bestPathBuffer == INT64_MAX) {
 			return;
 		}
@@ -3271,10 +3364,13 @@ namespace Roots
 			self = predecessor;
 			predecessor = childToParentMap[predecessor];
 		}
-		for (size_t i = 1; i < bestPath.size(); ++i) {
-			traceBranchVBO.push_back(bestPath[i - 1]);
-			traceBranchVBO.push_back(bestPath[i]);
+
+		std::vector<SkelEdge> branch;
+		for (size_t i = 0; i < bestPath.size() - 1; ++i) {
+			branch.push_back(boost::edge(bestPath[i], bestPath[i + 1], mSkeleton).first);
 		}
+		MetaV stemNode = branchingPointToStemNodeWithDistanceMap[branchingPoint].first;
+		branches[stemNode].push_back(branch);
 	}
 
 	void BMetaGraph::findBranchingPointsWithParent(MetaV stemNode, std::deque<SkelVert> stem, float radiusRangeCoeff) {

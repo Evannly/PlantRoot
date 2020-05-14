@@ -365,25 +365,9 @@ namespace Roots
 		else mode = OperationMode::None;
 	}
 
-	void BMetaGraph::setDisplayClusterInput(bool doShow)
+	void BMetaGraph::showHideBranch()
 	{
-		showClusterInput = doShow;
-		std::cout << "showClusterInput: " << doShow << std::endl;
-		buildEdgeVBOs();
-	}
-
-	void BMetaGraph::setDisplayTracingPrimaryBranches(bool doTrace)
-	{
-		tracePrimaryBranches = doTrace;
-		std::cout << "tracePrimaryBranches: " << doTrace << std::endl;
-		buildEdgeVBOs();
-	}
-
-	void BMetaGraph::setDisplayTracingTree(bool doShow)
-	{
-		showTracedBranches = doShow;
-		std::cout << "showTracingTrees: " << doShow << std::endl;
-		buildEdgeVBOs();
+		showBranch = !showBranch;
 	}
 
 	void BMetaGraph::setCurrentPrimaryNode(int node)
@@ -474,9 +458,11 @@ namespace Roots
 			glDrawElements(GL_LINES, nonStemNonBranchesVBO.size(), GL_UNSIGNED_INT, &nonStemNonBranchesVBO[0]);
 			if(nonWhorlEdgeStemVBO.size() != 0 && !showSuggestedStem) glDrawElements(GL_LINES, nonWhorlEdgeStemVBO.size(), GL_UNSIGNED_INT, &nonWhorlEdgeStemVBO[0]);
 			if(whorlEdgeStemVBO.size() != 0 && !showWhorl && !showSuggestedStem) glDrawElements(GL_LINES, whorlEdgeStemVBO.size(), GL_UNSIGNED_INT, &whorlEdgeStemVBO[0]);
+			if(nonSelectedWhorlBranchesVBO.size() != 0 && !showBranch) glDrawElements(GL_LINES, nonSelectedWhorlBranchesVBO.size(), GL_UNSIGNED_INT, &nonSelectedWhorlBranchesVBO[0]);
+			if(selectedWhorlBranchesVBO.size() != 0 && !selectWhorlValid && !showBranch) glDrawElements(GL_LINES, selectedWhorlBranchesVBO.size(), GL_UNSIGNED_INT, &selectedWhorlBranchesVBO[0]);
 		}
 
-		if (nonWhorlEdgeStemVBO.size() > 0 && showSuggestedStem)
+		if (nonWhorlEdgeStemVBO.size() != 0 && showSuggestedStem)
 		{
 			std::vector<float> testColor(mSkeleton.glVertices.size(), 1);
 			glVertexPointer(3, GL_FLOAT, 0, &mSkeleton.glVertices[0]);
@@ -486,12 +472,39 @@ namespace Roots
 			if (whorlEdgeStemVBO.size() > 0 && !showWhorl) glDrawElements(GL_LINES, whorlEdgeStemVBO.size(), GL_UNSIGNED_INT, &whorlEdgeStemVBO[0]);
 		}
 
-		if (whorlEdgeStemVBO.size() > 0 && showWhorl) {
+		if (whorlEdgeStemVBO.size() != 0 && showWhorl) {
 			std::vector<float> whorlEdgeColorArray(mSkeleton.glVertices.size(), 0);
 			glVertexPointer(3, GL_FLOAT, 0, &mSkeleton.glVertices[0]);
 			glColorPointer(3, GL_FLOAT, 0, whorlEdgeColorArray.data());
 			glLineWidth(8);
 			glDrawElements(GL_LINES, whorlEdgeStemVBO.size(), GL_UNSIGNED_INT, &whorlEdgeStemVBO[0]);
+		}
+
+		if (nonSelectedWhorlBranchesVBO.size() != 0 && showBranch) {
+			std::vector<float> testColor;
+			for (int i = 0; i < mSkeleton.glVertices.size(); ++i) {
+				testColor.push_back(1);
+				testColor.push_back(0);
+				testColor.push_back(0);
+			}
+			glVertexPointer(3, GL_FLOAT, 0, &mSkeleton.glVertices[0]);
+			glColorPointer(3, GL_FLOAT, 0, testColor.data());
+			glLineWidth(3);
+			glDrawElements(GL_LINES, nonSelectedWhorlBranchesVBO.size(), GL_UNSIGNED_INT, &nonSelectedWhorlBranchesVBO[0]);
+			if (selectedWhorlBranchesVBO.size() > 0 && !selectWhorlValid) glDrawElements(GL_LINES, selectedWhorlBranchesVBO.size(), GL_UNSIGNED_INT, &selectedWhorlBranchesVBO[0]);
+		}
+
+		if (selectedWhorlBranchesVBO.size() != 0 && selectWhorlValid) {
+			std::vector<float> testColor;
+			for (int i = 0; i < mSkeleton.glVertices.size(); ++i) {
+				testColor.push_back(0);
+				testColor.push_back(1);
+				testColor.push_back(0);
+			}
+			glVertexPointer(3, GL_FLOAT, 0, &mSkeleton.glVertices[0]);
+			glColorPointer(3, GL_FLOAT, 0, testColor.data());
+			glLineWidth(3);
+			glDrawElements(GL_LINES, selectedWhorlBranchesVBO.size(), GL_UNSIGNED_INT, &selectedWhorlBranchesVBO[0]);
 		}
 
 		//if (selectionVBO.size() > 0)
@@ -678,19 +691,15 @@ namespace Roots
 		//	glEnable(GL_DEPTH_TEST);
 		//}
 
-		//if (traceBranchVBO.size() > 0 && showTracedBranches)
+		//if (traceBranchVBO.size() > 0 && showBranch)
 		//{
-		//	glDisable(GL_DEPTH_TEST);
-
 		//	std::vector<float> testColor(mSkeleton.glVertices.size(), 1);
 
 		//	glVertexPointer(3, GL_FLOAT, 0, &mSkeleton.glVertices[0]);
 		//	glColorPointer(3, GL_FLOAT, 0, testColor.data());
 
-		//	glLineWidth(edgeOptions.scale);
+		//	glLineWidth(edgeOptions.scale * 1.5);
 		//	glDrawElements(GL_LINES, traceBranchVBO.size(), GL_UNSIGNED_INT, &traceBranchVBO[0]);
-
-		//	glEnable(GL_DEPTH_TEST);
 		//}
 
 		//if (showWhorl && auto_node.size() > 0)

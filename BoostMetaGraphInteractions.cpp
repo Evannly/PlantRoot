@@ -700,7 +700,6 @@ namespace Roots
 			std::cout << "start valid: " << selectStemStartValid << ", end valid: " << selectStemEndValid << std::endl;
 			SelectStemOperation();
 			showSuggestedStem = true;
-			mode = OperationMode::None;
 			nodeOptions.showEndpoints = prevShowEndpoints;
 			nodeOptions.showJunctions = prevShowJunctions;
 			buildEdgeVBOs();
@@ -723,7 +722,6 @@ namespace Roots
 			std::cout << "start valid: " << selectStemStartValid << ", end valid: " << selectStemEndValid << std::endl;
 			SelectStemOperation();
 			showSuggestedStem = true;
-			mode = OperationMode::None;
 			nodeOptions.showEndpoints = prevShowEndpoints;
 			nodeOptions.showJunctions = prevShowJunctions;
 			buildEdgeVBOs();
@@ -743,10 +741,12 @@ namespace Roots
 		if (isValid) {
 			selectWhorlValid = true;
 			selectedWhorl = node;
+			buildEdgeVBOs();
 		}
 		else { // unselect
 			selectWhorlValid = false;
 			selectedWhorl = 99999999;
+			buildEdgeVBOs();
 		}
 	}
 
@@ -783,6 +783,7 @@ namespace Roots
 			selectWhorlValid = true;
 			mode = OperationMode::EditWhorl;
 			showWhorl = true;
+			TraceBranchOperation(selectedWhorl);
 			buildEdgeVBOs();
 		}
 	}
@@ -790,6 +791,11 @@ namespace Roots
 	void BMetaGraph::deleteWhorl() {
 		if (mode != OperationMode::EditWhorl || !selectWhorlValid) return;
 		whorls.erase(selectedWhorl);
+		for (auto it = auto_node.begin(); it != auto_node.end(); ++it) {
+			if (std::get<0>(*it) == selectedWhorl) {
+				for (MetaV v : std::get<1>(*it)) branches.erase(v);
+			}
+		}
 		for (auto it = auto_node.begin(); it != auto_node.end(); ++it) {
 			if (std::get<0>(*it) == selectedWhorl) {
 				auto_node.erase(it);
@@ -824,6 +830,7 @@ namespace Roots
 			newAssociatedNodes.push_back(lowerBound);
 			auto_node[index] = std::tuple<MetaV, std::vector<MetaV>, std::vector<MetaE>>(selectedWhorl, newAssociatedNodes, newAssociatedEdges);
 			mode = OperationMode::EditWhorl;
+			TraceBranchOperation(selectedWhorl);
 			buildEdgeVBOs();
 		}
 	}
@@ -851,6 +858,7 @@ namespace Roots
 			newAssociatedNodes.push_back(lowerBound);
 			auto_node[index] = std::tuple<MetaV, std::vector<MetaV>, std::vector<MetaE>>(selectedWhorl, newAssociatedNodes, newAssociatedEdges);
 			mode = OperationMode::EditWhorl;
+			TraceBranchOperation(selectedWhorl);
 			buildEdgeVBOs();
 		}
 	}
